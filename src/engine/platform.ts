@@ -99,9 +99,37 @@ export async function promptInstall(): Promise<boolean> {
 /* ---------------- orientation ---------------- */
 
 /**
- * Le verrouillage n'est autorisé qu'en plein écran, donc seulement une fois la
- * PWA installée. L'échec est normal dans un onglet : on l'ignore.
+ * Passe en plein écran, puis verrouille l'orientation.
+ *
+ * Ces deux réglages étaient auparavant réclamés par le manifeste. C'était
+ * fragile : une application installée qui exige `fullscreen` et une orientation
+ * peut, selon la surcouche Android, ne jamais s'ouvrir du tout. Demandés depuis
+ * le code, au premier geste de l'enfant, leur échec est sans conséquence — on
+ * garde une application qui se lance, simplement avec une barre d'état.
+ *
+ * À appeler depuis un gestionnaire de geste : les deux API l'exigent.
  */
+export async function enterImmersive(): Promise<void> {
+  try {
+    if (!document.fullscreenElement) {
+      await document.documentElement.requestFullscreen?.({ navigationUI: 'hide' });
+    }
+  } catch {
+    // Refusé, ou déjà en plein écran via le manifeste : sans importance.
+  }
+
+  try {
+    // Le verrouillage n'est accepté qu'une fois en plein écran, d'où l'ordre.
+    const orientation = screen.orientation as ScreenOrientation & {
+      lock?: (o: string) => Promise<void>;
+    };
+    await orientation.lock?.('landscape');
+  } catch {
+    // Ignoré : la tablette reste utilisable dans les deux sens.
+  }
+}
+
+/** Conservé pour compatibilité : le verrouillage seul, sans plein écran. */
 export async function lockLandscape(): Promise<void> {
   try {
     const orientation = screen.orientation as ScreenOrientation & {

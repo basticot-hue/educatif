@@ -14,7 +14,7 @@ import { applyPalette, defaultPack, preloadPack } from '../content/pack';
 import { applyOverrides, releaseOverrideUrls } from '../content/overrides';
 import { pickMission, type Mission } from '../content/missions';
 import { unlockAudio } from '../engine/audio';
-import { keepAwake, lockLandscape, requestPersistentStorage } from '../engine/platform';
+import { enterImmersive, keepAwake, requestPersistentStorage } from '../engine/platform';
 import { Session, buildSeries, recentlyFinished } from '../engine/session';
 import { createSpeaker, type Speaker } from '../engine/speech';
 import { lastSession } from '../engine/storage';
@@ -159,10 +159,10 @@ export function App() {
       await s.loadBaselines();
       session.current = s;
 
-      // Demandées ici et pas au démarrage : ces API réclament un contexte
-      // d'installation ou de plein écran pour aboutir.
+      // Demandées ici et pas au démarrage : ces API réclament un geste de
+      // l'utilisateur pour aboutir, et aucune n'est indispensable au jeu.
       void requestPersistentStorage();
-      void lockLandscape();
+      void enterImmersive();
       void keepAwake();
 
       void speaker.current.speak('greet');

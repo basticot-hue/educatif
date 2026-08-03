@@ -7,6 +7,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { buildLabel } from '../build-info';
 import { missionById } from '../content/missions';
 import { PROMPTS, PROMPT_KEYS } from '../content/prompts';
 import { isInstalled, canInstall, promptInstall, storageInfo } from '../engine/platform';
@@ -463,6 +464,15 @@ function TechPanel({
   return (
     <>
       <h2>État technique</h2>
+
+      <p>
+        <strong>Version installée :</strong> {buildLabel()}
+      </p>
+      <p className="muted">
+        Comparez-la à celle annoncée après un déploiement. Si elle est plus ancienne, fermez
+        complètement l'application et rouvrez-la : le service worker récupère la nouvelle
+        version au lancement suivant, pas pendant l'utilisation.
+      </p>
 
       {storageUnavailable() && (
         <div className="callout">
