@@ -92,21 +92,48 @@
 }
 
 /*
- * Porte parent : coin bas-droit, appui long. Volontairement peu visible et
- * impossible à ouvrir par accident, mais jamais cachée au point que le parent
- * ne la retrouve pas.
+ * Porte parent : coin bas-droit, appui long de deux secondes.
+ *
+ * L'écart au bord n'est pas esthétique : sur Android, un appui contre l'arête
+ * droite est capté par le geste de retour arrière et n'atteint jamais la page.
  */
 .parent-door {
   position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 72px;
-  height: 72px;
+  right: 12px;
+  bottom: 12px;
+  width: 64px;
+  height: 64px;
+  padding: 0;
   border-radius: 50%;
-  opacity: 0.14;
-  background: radial-gradient(circle at 70% 70%, var(--surface) 0 22%, transparent 60%);
 }
 
-.parent-door[data-holding='true'] {
-  opacity: 0.5;
+.parent-door svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Assez présent pour qu'un adulte le repère, assez sourd pour n'attirer
+   aucun enfant — il n'y a rien qui bouge et rien de coloré. */
+.parent-door .glyph {
+  fill: none;
+  stroke: var(--surface);
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.3;
+}
+
+.parent-door:active .glyph {
+  opacity: 0.55;
+}
+
+/* Anneau de progression : sans lui, on relâche au bout d'une demi-seconde en
+   croyant que rien ne se passe. */
+.parent-door .ring {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 4;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: center;
 }

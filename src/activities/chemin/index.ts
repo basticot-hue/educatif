@@ -303,6 +303,21 @@ class CheminActivity implements Activity {
     this.die = turn.count;
     turn.startedAt = performance.now();
 
+    /*
+     * Le dé est énoncé aux niveaux 0 et 1 seulement.
+     *
+     * À ce stade l'enfant apprend encore à relier « deux points » au mot
+     * « deux » : l'entendre l'aide et lui donne son but. À partir du niveau 2,
+     * l'annoncer supprimerait le travail de subitisation — reconnaître une
+     * petite quantité d'un coup d'œil — qui est précisément ce que les points
+     * sont là pour provoquer. Les points restent l'information ; c'est à
+     * l'enfant de les lire.
+     *
+     * C'est un nombre-quantité, pas un numéro de case : les deux moments sont
+     * distincts, il n'y a pas de confusion avec l'énoncé ordinal du déplacement.
+     */
+    if (!this.config.childSpeaks) void this.props.speak(`num.${turn.count}`);
+
     // Le micro n'est sollicité qu'aux niveaux où l'enfant énonce : la permission
     // est donc demandée là, à la première utilisation réelle, jamais au démarrage.
     if (this.config.childSpeaks) {
