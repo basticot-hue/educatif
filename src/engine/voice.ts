@@ -45,6 +45,17 @@ async function ensureStream(): Promise<MediaStream | null> {
   }
 }
 
+/**
+ * Flux micro brut, pour l'analyse en direct (comptage de frappes).
+ *
+ * Rend `null` si le micro est refusé ou absent : c'est un cas **nominal**, pas
+ * une erreur. L'appelant bascule alors sur son repli sans que l'enfant
+ * s'aperçoive de quoi que ce soit.
+ */
+export async function openMicStream(): Promise<MediaStream | null> {
+  return ensureStream();
+}
+
 export function releaseMic(): void {
   stream?.getTracks().forEach((t) => t.stop());
   stream = null;

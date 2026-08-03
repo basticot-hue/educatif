@@ -1,0 +1,170 @@
+/* Le Bal des syllabes. */
+
+.bal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--gap);
+  width: 100%;
+  height: 100%;
+}
+
+/* La carte du mot, en haut : c'est elle qu'on pose sur un podium. */
+.bal-card {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bal-card img {
+  height: 20vh;
+  max-height: 160px;
+  width: auto;
+}
+
+.bal-podiums {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: var(--gap);
+  width: 100%;
+  padding-bottom: 8px;
+}
+
+/*
+ * Trois podiums à marches. La hauteur dit le nombre de syllabes sans un seul
+ * chiffre — l'enfant ne lit pas, mais il voit tout de suite qu'un est plus haut.
+ */
+.podium {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: var(--target);
+  width: min(22vw, 190px);
+  padding: 0;
+  transition: transform var(--t-fast) ease-out;
+}
+
+.podium-steps {
+  width: 100%;
+  height: calc(var(--steps) * 7vh);
+  min-height: calc(var(--steps) * 44px);
+  background: var(--surface);
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+/* Les points disent le compte, en écho aux points du dé du Chemin. */
+.podium-dots {
+  position: absolute;
+  bottom: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.podium-dots span {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--ink);
+  opacity: 0.5;
+}
+
+.podium:active {
+  transform: scale(0.97);
+}
+
+.podium.chosen .podium-steps {
+  background: var(--accent);
+}
+
+/* Refus : le podium s'enfonce et remonte. Aucune croix, aucun son grave. */
+.podium.refused {
+  animation: podium-refuse var(--t-base) ease-out;
+}
+
+@keyframes podium-refuse {
+  0% { transform: translateY(0); }
+  45% { transform: translateY(8px); }
+  100% { transform: translateY(0); }
+}
+
+/*
+ * Le personnage monte d'une marche par frappe.
+ *
+ * Deux éléments imbriqués, et non un seul : le porteur gère la montée, l'image
+ * gère le saut. Les empiler sur un même `transform` ferait que l'un écrase
+ * l'autre.
+ *
+ * On anime `transform` et non `bottom` : c'est la seule propriété composée, donc
+ * la seule qui ne déclenche pas un recalcul de mise en page à chaque image —
+ * ce qui compte sur un processeur de 2018. La hauteur de marche est lue sur le
+ * podium lui-même et posée en pixels depuis le script, pour que le personnage
+ * se pose exactement dessus quelle que soit la taille de l'écran.
+ */
+.bal-mascot-holder {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  transition: transform var(--t-base) ease-out;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.bal-mascot {
+  display: block;
+  height: 16vh;
+  max-height: 130px;
+  width: auto;
+}
+
+.bal-mascot.hop {
+  animation: hop 260ms ease-out;
+}
+
+@keyframes hop {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+  100% { transform: translateY(0); }
+}
+
+/*
+ * Repli tactile. Il n'apparaît que si le micro n'est pas exploitable, et rien
+ * ne le distingue d'un élément normal : l'enfant ne doit pas comprendre qu'il
+ * se passe quelque chose d'anormal.
+ */
+.bal-tap {
+  position: absolute;
+  right: var(--gap);
+  bottom: var(--gap);
+  width: var(--target);
+  height: var(--target);
+  border-radius: 50%;
+  background: var(--surface);
+  opacity: 0.9;
+}
+
+.bal-tap::after {
+  content: '';
+  display: block;
+  width: 44%;
+  height: 44%;
+  margin: auto;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.bal-tap:active {
+  transform: scale(0.94);
+}

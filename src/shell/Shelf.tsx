@@ -44,9 +44,28 @@ function MissionsIcon() {
   );
 }
 
+/** Trois podiums de hauteurs croissantes, et deux mains qui frappent. */
+function SyllabesIcon() {
+  return (
+    <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect x="22" y="82" width="44" height="26" rx="6" fill="#12212E" opacity="0.14" />
+      <rect x="76" y="60" width="44" height="48" rx="6" fill="#12212E" opacity="0.2" />
+      <rect x="130" y="38" width="44" height="70" rx="6" fill="#E4B429" />
+      <circle cx="44" cy="95" r="5" fill="#12212E" opacity="0.5" />
+      <circle cx="90" cy="74" r="5" fill="#12212E" opacity="0.5" />
+      <circle cx="106" cy="74" r="5" fill="#12212E" opacity="0.5" />
+      <circle cx="144" cy="52" r="5" fill="#12212E" />
+      <circle cx="160" cy="52" r="5" fill="#12212E" />
+      <circle cx="152" cy="68" r="5" fill="#12212E" />
+      <path d="M32 30 L52 18 M52 30 L32 18" stroke="#E4B429" strokeWidth="6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 const ICONS: Partial<Record<ActivityId, () => React.ReactElement>> = {
   chemin: CheminIcon,
   missions: MissionsIcon,
+  syllabes: SyllabesIcon,
 };
 
 interface Props {

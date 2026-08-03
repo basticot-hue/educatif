@@ -21,7 +21,17 @@
 export interface WordCard {
   id: string;
   label: string;
+  /**
+   * Nombre de syllabes **orales**, celles qu'on frappe dans les mains.
+   *
+   * Le « e » final muet ne compte pas : « banane » se frappe ba-nane, en deux
+   * fois, et non ba-na-ne. C'est ce qui se pratique en maternelle, et c'est la
+   * réalité de la langue parlée — compter le e muet apprendrait à l'enfant un
+   * découpage qu'il n'entend pas.
+   */
   syllables: number;
+  /** Le découpage effectif, prononcé lentement à la consigne. */
+  split: string[];
   onset: string;
   /** Vrai si l'attaque peut être tenue — condition d'usage avant le niveau 4. */
   continuant: boolean;
@@ -160,34 +170,81 @@ const BATEAU = svg(
     `<path d="M57 34 L28 66 L57 66 Z" fill="#DCCFB8"/>`,
 );
 
+const CHOCOLAT = svg(
+  `<rect x="16" y="34" width="88" height="60" rx="6" fill="#6B4226"/>` +
+    `<rect x="16" y="34" width="88" height="10" rx="5" fill="#8A5A38"/>` +
+    Array.from({ length: 6 }, (_, i) => {
+      const cx = 22 + (i % 3) * 29;
+      const cy = 50 + Math.floor(i / 3) * 23;
+      return `<rect x="${cx}" y="${cy}" width="25" height="19" rx="3" fill="#54321D"/>`;
+    }).join('') +
+    `<path d="M104 34 L112 26 L112 86 L104 94 Z" fill="#C9A27A"/>`,
+);
+
+const PARAPLUIE = svg(
+  `<path d="M12 62 A48 48 0 0 1 108 62 Z" fill="#D2405C"/>` +
+    `<path d="M12 62 Q24 52 36 62 Q48 52 60 62 Q72 52 84 62 Q96 52 108 62" fill="none" stroke="#A32F46" stroke-width="4"/>` +
+    `<line x1="60" y1="62" x2="60" y2="96" stroke="#7A5A3A" stroke-width="6" stroke-linecap="round"/>` +
+    `<path d="M60 96 Q60 108 46 106" fill="none" stroke="#7A5A3A" stroke-width="6" stroke-linecap="round"/>` +
+    `<line x1="60" y1="14" x2="60" y2="22" stroke="#7A5A3A" stroke-width="5" stroke-linecap="round"/>`,
+);
+
+const ELEPHANT = svg(
+  `<ellipse cx="62" cy="66" rx="38" ry="32" fill="#9AA3AC"/>` +
+    `<ellipse cx="30" cy="58" rx="20" ry="24" fill="#828C96"/>` +
+    `<path d="M84 78 Q102 88 96 104 Q88 108 86 100 Q90 92 78 88 Z" fill="#9AA3AC"/>` +
+    `<circle cx="52" cy="56" r="4" fill="#2A2A2A"/>` +
+    `<rect x="44" y="94" width="14" height="14" rx="4" fill="#828C96"/>` +
+    `<rect x="70" y="94" width="14" height="14" rx="4" fill="#828C96"/>`,
+);
+
 export const WORDS: WordCard[] = [
   // --- attaques continues : utilisables à tous les niveaux du Sac ---
-  { id: 'soleil', label: 'soleil', syllables: 2, onset: 's', continuant: true, rime: 'eil', category: 'dehors', image: SOLEIL },
-  { id: 'souris', label: 'souris', syllables: 2, onset: 's', continuant: true, rime: 'i', category: 'animaux', image: SOURIS },
-  { id: 'lune', label: 'lune', syllables: 1, onset: 'l', continuant: true, rime: 'une', category: 'dehors', image: LUNE },
-  { id: 'fleur', label: 'fleur', syllables: 1, onset: 'f', continuant: true, rime: 'eur', category: 'dehors', image: FLEUR },
-  { id: 'maison', label: 'maison', syllables: 2, onset: 'm', continuant: true, rime: 'on', category: 'dehors', image: MAISON },
-  { id: 'chapeau', label: 'chapeau', syllables: 2, onset: 'ch', continuant: true, rime: 'o', category: 'habits', image: CHAPEAU },
-  { id: 'chat', label: 'chat', syllables: 1, onset: 'ch', continuant: true, rime: 'a', category: 'animaux', image: CHAT },
-  { id: 'vache', label: 'vache', syllables: 1, onset: 'v', continuant: true, rime: 'ache', category: 'animaux', image: VACHE },
-  { id: 'rose', label: 'rose', syllables: 1, onset: 'r', continuant: true, rime: 'ose', category: 'dehors', image: ROSE },
-  { id: 'rat', label: 'rat', syllables: 1, onset: 'r', continuant: true, rime: 'a', category: 'animaux', image: RAT },
-  { id: 'jupe', label: 'jupe', syllables: 1, onset: 'j', continuant: true, rime: 'upe', category: 'habits', image: JUPE },
+  { id: 'soleil', label: 'soleil', syllables: 2, split: ['so', 'leil'], onset: 's', continuant: true, rime: 'eil', category: 'dehors', image: SOLEIL },
+  { id: 'souris', label: 'souris', syllables: 2, split: ['sou', 'ris'], onset: 's', continuant: true, rime: 'i', category: 'animaux', image: SOURIS },
+  { id: 'lune', label: 'lune', syllables: 1, split: ['lune'], onset: 'l', continuant: true, rime: 'une', category: 'dehors', image: LUNE },
+  { id: 'fleur', label: 'fleur', syllables: 1, split: ['fleur'], onset: 'f', continuant: true, rime: 'eur', category: 'dehors', image: FLEUR },
+  { id: 'maison', label: 'maison', syllables: 2, split: ['mai', 'son'], onset: 'm', continuant: true, rime: 'on', category: 'dehors', image: MAISON },
+  { id: 'chapeau', label: 'chapeau', syllables: 2, split: ['cha', 'peau'], onset: 'ch', continuant: true, rime: 'o', category: 'habits', image: CHAPEAU },
+  { id: 'chat', label: 'chat', syllables: 1, split: ['chat'], onset: 'ch', continuant: true, rime: 'a', category: 'animaux', image: CHAT },
+  { id: 'chocolat', label: 'chocolat', syllables: 3, split: ['cho', 'co', 'lat'], onset: 'ch', continuant: true, rime: 'a', category: 'cuisine', image: CHOCOLAT },
+  { id: 'vache', label: 'vache', syllables: 1, split: ['vache'], onset: 'v', continuant: true, rime: 'ache', category: 'animaux', image: VACHE },
+  { id: 'rose', label: 'rose', syllables: 1, split: ['rose'], onset: 'r', continuant: true, rime: 'ose', category: 'dehors', image: ROSE },
+  { id: 'rat', label: 'rat', syllables: 1, split: ['rat'], onset: 'r', continuant: true, rime: 'a', category: 'animaux', image: RAT },
+  { id: 'jupe', label: 'jupe', syllables: 1, split: ['jupe'], onset: 'j', continuant: true, rime: 'upe', category: 'habits', image: JUPE },
 
   // --- attaques occlusives : niveau 4 du Sac et au-delà ---
-  { id: 'papillon', label: 'papillon', syllables: 3, onset: 'p', continuant: false, rime: 'on', category: 'animaux', image: PAPILLON },
-  { id: 'prune', label: 'prune', syllables: 1, onset: 'p', continuant: false, rime: 'une', category: 'cuisine', image: PRUNE },
-  { id: 'banane', label: 'banane', syllables: 3, onset: 'b', continuant: false, rime: 'ane', category: 'cuisine', image: BANANE },
-  { id: 'bateau', label: 'bateau', syllables: 2, onset: 'b', continuant: false, rime: 'o', category: 'dehors', image: BATEAU },
-  { id: 'tomate', label: 'tomate', syllables: 3, onset: 't', continuant: false, rime: 'ate', category: 'cuisine', image: TOMATE },
+  { id: 'papillon', label: 'papillon', syllables: 3, split: ['pa', 'pi', 'llon'], onset: 'p', continuant: false, rime: 'on', category: 'animaux', image: PAPILLON },
+  { id: 'parapluie', label: 'parapluie', syllables: 3, split: ['pa', 'ra', 'pluie'], onset: 'p', continuant: false, rime: 'uie', category: 'dehors', image: PARAPLUIE },
+  { id: 'prune', label: 'prune', syllables: 1, split: ['prune'], onset: 'p', continuant: false, rime: 'une', category: 'cuisine', image: PRUNE },
+  { id: 'banane', label: 'banane', syllables: 2, split: ['ba', 'nane'], onset: 'b', continuant: false, rime: 'ane', category: 'cuisine', image: BANANE },
+  { id: 'bateau', label: 'bateau', syllables: 2, split: ['ba', 'teau'], onset: 'b', continuant: false, rime: 'o', category: 'dehors', image: BATEAU },
+  { id: 'tomate', label: 'tomate', syllables: 2, split: ['to', 'mate'], onset: 't', continuant: false, rime: 'ate', category: 'cuisine', image: TOMATE },
+
+  // Attaque vocalique : inutilisable par Le Sac, qui travaille les consonnes,
+  // mais parfaitement valable pour frapper trois syllabes.
+  { id: 'elephant', label: 'éléphant', syllables: 3, split: ['é', 'lé', 'phant'], onset: 'é', continuant: true, rime: 'ant', category: 'animaux', image: ELEPHANT },
 ];
 
 export function wordsWithSyllables(n: number): WordCard[] {
   return WORDS.filter((w) => w.syllables === n);
 }
 
+/**
+ * Attaques consonantiques exploitables par Le Sac de Chase.
+ *
+ * Une attaque vocalique (« éléphant ») ne se range dans aucun sac : l'atelier
+ * oppose des consonnes. Le mot reste utile au Bal, qui ne travaille que le
+ * découpage en syllabes.
+ */
+export const CONSONANT_ONSETS = new Set(['s', 'l', 'f', 'm', 'ch', 'v', 'r', 'j', 'z', 'p', 'b', 't', 'd', 'k', 'g']);
+
+export function withConsonantOnset(): WordCard[] {
+  return WORDS.filter((w) => CONSONANT_ONSETS.has(w.onset));
+}
+
 export function continuants(): WordCard[] {
-  return WORDS.filter((w) => w.continuant);
+  return withConsonantOnset().filter((w) => w.continuant);
 }
 
 /** Familles de rimes comptant au moins deux mots — les seules utilisables. */

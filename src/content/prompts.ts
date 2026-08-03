@@ -97,6 +97,37 @@ export const ACTIVITY_DOCS: ActivityDoc[] = [
       'mission.addition': 'Il en faut deux de plus. Ajoute-les.',
     },
   },
+  {
+    id: 'syllabes',
+    name: 'Le Bal des syllabes',
+    goal: 'Entendre qu’un mot est fait de morceaux, et savoir combien il en a.',
+    childDoes:
+      'Il écoute le mot découpé, frappe une fois dans ses mains par morceau, puis pose la carte sur le podium 1, 2 ou 3.',
+    why:
+      'L’ordre des niveaux suit l’ordre développemental réel : rime, puis syllabe, puis son isolé. ' +
+      'La rime s’entend bien avant qu’on puisse isoler un son, d’où le niveau 0. ' +
+      'On frappe dans les mains parce que le rythme du corps donne accès au découpage mieux que l’écoute seule. ' +
+      'Le micro ne juge rien : il fait seulement monter le personnage d’une marche par frappe — ' +
+      'c’est le podium choisi qui compte. Si le micro est refusé ou la pièce bruyante, on frappe sur l’écran, sans que rien ne le signale à l’enfant.',
+    skills: ['phono.rhyme', 'phono.syllable'],
+    levels: [
+      'Les rimes : « chat » va avec « rat » ou avec « lune » ?',
+      'Mots de 2 syllabes.',
+      'Mots de 3 syllabes — l’enfant frappe et dit chaque morceau.',
+      'Contraste fort : 1 syllabe contre 3.',
+      'Où entends-tu ce morceau dans le mot ? Au début, au milieu, à la fin.',
+      'Le mot sans son dernier morceau, ça fait quoi ?',
+      'Inverser deux morceaux.',
+    ],
+    prompts: {
+      'syllabes.rime': 'Écoute bien. Quel mot finit pareil ?',
+      'syllabes.frapper': 'Frappe dans tes mains, une fois par morceau.',
+      'syllabes.podium': 'Maintenant, pose la carte sur le bon podium.',
+      'syllabes.localiser': 'Écoute où se trouve ce morceau dans le mot.',
+      'syllabes.supprimer': 'Enlève le dernier morceau. Quel morceau reste à la fin ?',
+      'syllabes.inverser': 'Montre le deuxième morceau du mot.',
+    },
+  },
 ];
 
 /* ------------------------------------------------------------------ */

@@ -10,6 +10,8 @@ import type { Activity, ActivityId, SkillId } from '../engine/types';
 import { createChemin } from './chemin';
 import { createMissions } from './missions';
 import { skillForLevel as missionsSkill } from './missions/levels';
+import { createSyllabes } from './syllabes';
+import { skillForLevel as syllabesSkill } from './syllabes/levels';
 
 export interface ActivityEntry {
   id: ActivityId;
@@ -40,6 +42,14 @@ export const ACTIVITIES: ActivityEntry[] = [
     create: createMissions,
     drivingSkill: 'counting.one_to_one',
     skillAt: missionsSkill,
+  },
+  {
+    id: 'syllabes',
+    create: createSyllabes,
+    // La rime pilote le niveau 0 ; la compétence de référence reste la syllabe,
+    // qui couvre six des sept niveaux.
+    drivingSkill: 'phono.syllable',
+    skillAt: syllabesSkill,
   },
 ];
 

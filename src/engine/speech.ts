@@ -11,6 +11,7 @@
  */
 
 import { cachedSound, loadSound, playBuffer, stopPlayback } from './audio';
+import { WORDS } from '../content/packs/mascottes/words';
 import { promptText } from '../content/prompts';
 import { getBlob } from './storage';
 import type { PackCharacter, SpeechKey, UniversePack } from './types';
@@ -161,6 +162,19 @@ export function createSpeaker(pack: UniversePack, character: PackCharacter): Spe
     if (key.startsWith('num.')) {
       const n = Number(key.slice(4));
       return Number.isFinite(n) ? numberWord(n) : null;
+    }
+
+    /*
+     * Clés dynamiques : le texte est dans la clé elle-même.
+     *
+     * `syl.cha` fait dire « cha », `mot.chapeau` fait dire « chapeau ». Cela
+     * évite d'énumérer à la main autant de clés que de mots et de syllabes du
+     * pack — et un pack importé fonctionnera sans qu'on touche à ce fichier.
+     */
+    if (key.startsWith('syl.')) return key.slice(4);
+    if (key.startsWith('mot.')) {
+      const word = WORDS.find((w) => w.id === key.slice(4));
+      return word?.label ?? null;
     }
     switch (key) {
       case 'greet':
