@@ -8,16 +8,23 @@
  * elle-même — c'est ce qui évite la négociation quotidienne.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { activityEntry, AVAILABLE_IDS } from '../activities/registry';
 import { applyPalette, defaultPack, preloadPack } from '../content/pack';
+import { applyOverrides, releaseOverrideUrls } from '../content/overrides';
 import { pickMission, type Mission } from '../content/missions';
 import { unlockAudio } from '../engine/audio';
 import { keepAwake, lockLandscape, requestPersistentStorage } from '../engine/platform';
 import { Session, buildSeries, recentlyFinished } from '../engine/session';
 import { createSpeaker, type Speaker } from '../engine/speech';
 import { lastSession } from '../engine/storage';
-import type { ActivityId, Item, ItemResult, PackCharacter } from '../engine/types';
+import type {
+  ActivityId,
+  Item,
+  ItemResult,
+  PackCharacter,
+  UniversePack,
+} from '../engine/types';
 import { saveChildVoice, startRecording } from '../engine/voice';
 import { ActivityHost } from './ActivityHost';
 import { EndScreen } from './EndScreen';
@@ -42,7 +49,14 @@ type Stage =
 const SERIES_PER_SESSION = 2;
 
 export function App() {
-  const pack = useMemo(() => defaultPack(), []);
+  /**
+   * Le pack peut porter des images remplacées par le parent. On le recharge
+   * après chaque substitution — `packVersion` sert uniquement de déclencheur.
+   */
+  const [packVersion, setPackVersion] = useState(0);
+  const [packReady, setPackReady] = useState(false);
+  const [pack, setPack] = useState<UniversePack>(() => defaultPack());
+  const relaunchBlocked = useRef(false);
 
   const [stage, setStage] = useState<Stage>('boot');
   const [character, setCharacter] = useState<PackCharacter | null>(null);
@@ -63,16 +77,35 @@ export function App() {
 
   /* ---------------- démarrage ---------------- */
 
+  /*
+   * Chargement du pack, y compris les images remplacées par le parent.
+   *
+   * Cet effet ne touche **pas** à l'écran courant : il se rejoue à chaque
+   * substitution d'image, et repositionner l'écran ici éjectait le parent de son
+   * espace au milieu de son travail, pour le renvoyer à l'accueil.
+   */
   useEffect(() => {
-    applyPalette(pack);
-
     void (async () => {
-      await preloadPack(pack);
+      releaseOverrideUrls();
+      const resolved = await applyOverrides(defaultPack());
+      applyPalette(resolved);
+      await preloadPack(resolved);
+      setPack(resolved);
+      setPackReady(true);
+    })();
+  }, [packVersion]);
+
+  /** Écran de départ : décidé une seule fois, au tout premier chargement. */
+  useEffect(() => {
+    if (!packReady) return;
+    void (async () => {
       // Une séance terminée il y a moins d'une heure ne se rejoue pas : pas
       // d'apprentissage à la chaîne, et surtout pas de réclamation quotidienne.
-      setStage((await recentlyFinished()) ? 'end' : 'welcome');
+      const blocked = await recentlyFinished();
+      relaunchBlocked.current = blocked;
+      setStage((current) => (current === 'boot' ? (blocked ? 'end' : 'welcome') : current));
     })();
-  }, [pack]);
+  }, [packReady]);
 
   /* ---------------- choix du personnage ---------------- */
 
@@ -177,6 +210,7 @@ export function App() {
     return (
       <Parent
         pack={pack}
+        onPackChanged={() => setPackVersion((v) => v + 1)}
         onClose={() => setStage(stageBeforeParent.current === 'parent' ? 'welcome' : stageBeforeParent.current)}
         onRestart={() => {
           session.current = null;

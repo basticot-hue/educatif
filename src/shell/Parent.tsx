@@ -15,6 +15,7 @@ import { blobKeys, clearAll, deleteBlob, getSetting, lastSession, putBlob, setSe
 import type { SessionRecord, UniversePack } from '../engine/types';
 import { micStatus, startRecording, type Recording } from '../engine/voice';
 import { ActivityDocs } from './ActivityDocs';
+import { Characters } from './Characters';
 import { TouchProbe } from './TouchProbe';
 import { WordSheet } from './WordSheet';
 import './parent.css';
@@ -27,22 +28,34 @@ interface Props {
   pack: UniversePack;
   onClose: () => void;
   onRestart: () => void;
+  /** Le pack doit être rechargé : une image de personnage a changé. */
+  onPackChanged: () => void;
 }
 
 export function Parent(props: Props) {
   const [open, setOpen] = useState(false);
-  const [panel, setPanel] = useState<'main' | 'probe' | 'words' | 'docs'>('main');
+  const [panel, setPanel] = useState<'main' | 'probe' | 'words' | 'docs' | 'characters'>('main');
 
   if (!open) return <Gate onPass={() => setOpen(true)} onCancel={props.onClose} />;
   if (panel === 'probe') return <TouchProbe onClose={() => setPanel('main')} />;
   if (panel === 'words') return <WordSheet onClose={() => setPanel('main')} />;
   if (panel === 'docs') return <ActivityDocs onClose={() => setPanel('main')} />;
+  if (panel === 'characters') {
+    return (
+      <Characters
+        pack={props.pack}
+        onChanged={props.onPackChanged}
+        onClose={() => setPanel('main')}
+      />
+    );
+  }
   return (
     <ParentPanels
       {...props}
       onProbe={() => setPanel('probe')}
       onWords={() => setPanel('words')}
       onDocs={() => setPanel('docs')}
+      onCharacters={() => setPanel('characters')}
     />
   );
 }
@@ -83,7 +96,13 @@ function ParentPanels({
   onProbe,
   onWords,
   onDocs,
-}: Props & { onProbe: () => void; onWords: () => void; onDocs: () => void }) {
+  onCharacters,
+}: Props & {
+  onProbe: () => void;
+  onWords: () => void;
+  onDocs: () => void;
+  onCharacters: () => void;
+}) {
   const [session, setSession] = useState<SessionRecord | null>(null);
   const [recorded, setRecorded] = useState<Set<string>>(new Set());
   const [recordingKey, setRecordingKey] = useState<string | null>(null);
@@ -115,6 +134,9 @@ function ParentPanels({
         <div className="btn-row" style={{ marginTop: 12 }}>
           <button className="btn" onClick={onDocs}>
             Les ateliers — à quoi ils servent, quoi faire
+          </button>
+          <button className="btn ghost" onClick={onCharacters}>
+            Changer les mascottes
           </button>
         </div>
 
