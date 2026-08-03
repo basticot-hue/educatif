@@ -1,0 +1,165 @@
+/* Espace parent : le seul endroit de l'app où il y a du texte. */
+
+.parent {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #f6f7f9;
+  color: #12212e;
+  padding: 24px;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.parent-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding-bottom: 64px;
+}
+
+.parent h1 {
+  font-size: 22px;
+  margin: 0 0 4px;
+}
+
+.parent h2 {
+  font-size: 16px;
+  margin: 32px 0 8px;
+  padding-top: 20px;
+  border-top: 1px solid #dfe3e8;
+}
+
+.parent p {
+  margin: 8px 0;
+}
+
+.parent ul {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.parent li {
+  margin: 4px 0;
+}
+
+.parent .muted {
+  color: #5d6b7a;
+}
+
+.parent .btn {
+  min-height: 44px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: #12212e;
+  color: #fff;
+  font-weight: 600;
+}
+
+.parent .btn.ghost {
+  background: transparent;
+  color: #12212e;
+  border: 1px solid #b9c2cc;
+}
+
+.parent .btn.danger {
+  background: #a6362a;
+}
+
+.parent .btn[disabled] {
+  opacity: 0.45;
+}
+
+.parent .btn-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+/* État technique : une ligne par point, pastille verte ou orange. */
+.status {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 10px;
+  align-items: baseline;
+  margin: 8px 0;
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #b9c2cc;
+  align-self: center;
+}
+
+.dot.ok {
+  background: #2e8b57;
+}
+
+.dot.warn {
+  background: #d08b1f;
+}
+
+/* Grille d'enregistrement des nombres. */
+.num-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.num-cell {
+  height: 56px;
+  border-radius: 10px;
+  border: 1px solid #b9c2cc;
+  background: #fff;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.num-cell[data-recorded='true'] {
+  border-color: #2e8b57;
+  background: #eaf5ee;
+}
+
+.num-cell[data-active='true'] {
+  border-color: #a6362a;
+  background: #f7e9e7;
+}
+
+/* Porte d'entrée : une opération, pas un code à retenir. */
+.gate {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: #f6f7f9;
+  color: #12212e;
+}
+
+.gate input {
+  font-size: 28px;
+  width: 140px;
+  height: 64px;
+  text-align: center;
+  border: 1px solid #b9c2cc;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.callout {
+  background: #fff;
+  border: 1px solid #dfe3e8;
+  border-left: 3px solid #d08b1f;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin: 12px 0;
+}

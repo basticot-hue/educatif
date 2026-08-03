@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Rosalie : silhouette large et basse. Un escargot, coquille en spirale. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120" width="100" height="120">
+  <ellipse cx="50" cy="108" rx="34" ry="7" fill="#0A2237" opacity="0.35"/>
+  <path d="M8 102 Q6 84 22 82 L64 82 Q76 84 74 102 Z" fill="#7FC96B"/>
+  <circle cx="18" cy="66" r="4" fill="#E4B429"/>
+  <circle cx="30" cy="60" r="4" fill="#E4B429"/>
+  <path d="M18 82 Q12 74 18 68" stroke="#7FC96B" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M28 82 Q26 72 30 62" stroke="#7FC96B" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <circle cx="66" cy="60" r="34" fill="#D9705A"/>
+  <path d="M66 60 m0 -26 a26 26 0 1 1 -18.4 7.6 a19 19 0 1 0 13.4 -5.6 a12 12 0 1 1 -8.5 3.5"
+        fill="none" stroke="#FBE3D4" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="14" cy="90" r="5" fill="#FFFFFF"/>
+  <circle cx="15" cy="91" r="2.5" fill="#12212E"/>
+  <path d="M20 96 Q26 100 32 96" stroke="#12212E" stroke-width="3" stroke-linecap="round" fill="none"/>
+</svg>

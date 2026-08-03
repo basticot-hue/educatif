@@ -1,0 +1,112 @@
+/* Écrans du shell. Les ateliers, eux, dessinent au canvas. */
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap);
+  background: var(--bg);
+  padding: var(--gap);
+}
+
+/* Rangée de choix : personnages à l'accueil, ateliers sur l'étagère. */
+.row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: calc(var(--gap) * 1.5);
+  flex-wrap: wrap;
+}
+
+.pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: var(--target);
+  min-height: var(--target);
+  padding: var(--gap);
+  border-radius: var(--radius);
+  background: transparent;
+  transition: transform var(--t-fast) ease-out;
+}
+
+.pick:active {
+  transform: scale(0.94);
+}
+
+.pick img {
+  height: 26vh;
+  max-height: 220px;
+  min-height: 96px;
+  width: auto;
+  pointer-events: none;
+}
+
+/* Le personnage seul : accueil, interlude, mission. */
+.hero {
+  height: 42vh;
+  max-height: 340px;
+  min-height: 140px;
+  width: auto;
+}
+
+/* Tuile d'atelier sur l'étagère. Aucune n'est verrouillée, aucun ordre imposé. */
+.tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(46vw, 420px);
+  height: min(46vh, 300px);
+  min-width: var(--target);
+  min-height: var(--target);
+  border-radius: calc(var(--radius) * 1.5);
+  background: var(--surface);
+  transition: transform var(--t-fast) ease-out;
+}
+
+.tile:active {
+  transform: scale(0.97);
+}
+
+.tile svg {
+  width: 72%;
+  height: 72%;
+}
+
+/*
+ * Écran terminal. Aucune cible tactile : la séance est finie, il n'y a rien à
+ * négocier. Seule la porte parent, dans un coin, permet de repartir.
+ */
+.end {
+  background: var(--bg);
+}
+
+.end .glyph {
+  width: 96px;
+  height: 96px;
+  opacity: 0.18;
+}
+
+/*
+ * Porte parent : coin bas-droit, appui long. Volontairement peu visible et
+ * impossible à ouvrir par accident, mais jamais cachée au point que le parent
+ * ne la retrouve pas.
+ */
+.parent-door {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  opacity: 0.14;
+  background: radial-gradient(circle at 70% 70%, var(--surface) 0 22%, transparent 60%);
+}
+
+.parent-door[data-holding='true'] {
+  opacity: 0.5;
+}

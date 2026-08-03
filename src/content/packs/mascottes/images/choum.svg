@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Choum : silhouette haute en dôme, base ondulée. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120" width="100" height="120">
+  <ellipse cx="50" cy="110" rx="24" ry="6" fill="#0A2237" opacity="0.3"/>
+  <path d="M18 100 L18 46 Q18 8 50 8 Q82 8 82 46 L82 100
+           Q74 94 66 100 Q58 106 50 100 Q42 94 34 100 Q26 106 18 100 Z" fill="#9B7BD4"/>
+  <path d="M26 92 L26 48 Q26 18 50 18 Q74 18 74 48 L74 92
+           Q68 88 62 92 Q56 96 50 92 Q44 88 38 92 Q32 96 26 92 Z" fill="#C4AEEA"/>
+  <circle cx="36" cy="50" r="9" fill="#FFFFFF"/>
+  <circle cx="64" cy="50" r="9" fill="#FFFFFF"/>
+  <circle cx="37" cy="52" r="4.5" fill="#12212E"/>
+  <circle cx="65" cy="52" r="4.5" fill="#12212E"/>
+  <circle cx="39" cy="49.5" r="1.8" fill="#FFFFFF"/>
+  <circle cx="67" cy="49.5" r="1.8" fill="#FFFFFF"/>
+  <path d="M42 66 Q50 74 58 66" stroke="#12212E" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <circle cx="50" cy="14" r="6" fill="#E4B429"/>
+</svg>
