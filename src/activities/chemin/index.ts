@@ -102,6 +102,8 @@ class CheminActivity implements Activity {
   private frame = 0;
   private lastFrameAt = 0;
   private hintTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Minuteries diverses, toutes annulées au démontage. */
+  private timers = new Set<ReturnType<typeof setTimeout>>();
   private disposed = false;
   private reducedMotion = false;
 
@@ -173,6 +175,8 @@ class CheminActivity implements Activity {
     this.frame = 0;
     this.clearHintTimer();
     this.clearRollTimer();
+    this.timers.forEach(clearTimeout);
+    this.timers.clear();
     this.turn?.recording?.cancel();
     window.removeEventListener('resize', this.onResize);
     this.canvas.removeEventListener('pointerdown', this.onPointerDown);
@@ -257,6 +261,18 @@ class CheminActivity implements Activity {
     this.dieRolling = false;
     this.pulsing.clear();
     this.invalidate();
+
+    /*
+     * La consigne n'est donnée qu'au **premier tour de la série**.
+     *
+     * Sans elle, un enfant qui découvre l'atelier n'a aucun moyen de savoir
+     * qu'il faut taper le dé — il n'y a pas de texte, et il ne lit pas. La
+     * répéter à chaque tour serait en revanche du harcèlement : une fois la
+     * règle comprise, le silence est ce qu'il faut.
+     */
+    if (this.consumed === 0) {
+      void this.props.speak('chemin.roll');
+    }
   }
 
   private rollDie(): void {
@@ -317,6 +333,15 @@ class CheminActivity implements Activity {
      * distincts, il n'y a pas de confusion avec l'énoncé ordinal du déplacement.
      */
     if (!this.config.childSpeaks) void this.props.speak(`num.${turn.count}`);
+
+    // Deuxième moitié de la consigne, elle aussi au premier tour seulement :
+    // savoir qu'il faut *glisser* le pion, et non taper la case d'arrivée.
+    if (this.consumed === 0) {
+      this.later(
+        () => this.props.speak(this.config.childSpeaks ? 'chemin.say' : 'chemin.move'),
+        1400,
+      );
+    }
 
     // Le micro n'est sollicité qu'aux niveaux où l'enfant énonce : la permission
     // est donc demandée là, à la première utilisation réelle, jamais au démarrage.
@@ -538,6 +563,16 @@ class CheminActivity implements Activity {
       clearTimeout(this.hintTimer);
       this.hintTimer = null;
     }
+  }
+
+  /** Diffère une action, sans qu'elle survive au démontage. */
+  private later(fn: () => void, ms: number): void {
+    const generation = this.generation;
+    const id = setTimeout(() => {
+      this.timers.delete(id);
+      if (this.generation === generation) fn();
+    }, ms);
+    this.timers.add(id);
   }
 
   /* ---------------- boucle de rendu ---------------- */

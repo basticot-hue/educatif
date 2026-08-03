@@ -8,11 +8,13 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { missionById } from '../content/missions';
+import { PROMPTS, PROMPT_KEYS } from '../content/prompts';
 import { isInstalled, canInstall, promptInstall, storageInfo } from '../engine/platform';
 import { NUMBER_KEYS, hasFrenchVoice, numberWord, parentVoiceKey } from '../engine/speech';
 import { blobKeys, clearAll, deleteBlob, getSetting, lastSession, putBlob, setSetting } from '../engine/storage';
 import type { SessionRecord, UniversePack } from '../engine/types';
 import { micStatus, startRecording, type Recording } from '../engine/voice';
+import { ActivityDocs } from './ActivityDocs';
 import { TouchProbe } from './TouchProbe';
 import { WordSheet } from './WordSheet';
 import './parent.css';
@@ -29,16 +31,18 @@ interface Props {
 
 export function Parent(props: Props) {
   const [open, setOpen] = useState(false);
-  const [panel, setPanel] = useState<'main' | 'probe' | 'words'>('main');
+  const [panel, setPanel] = useState<'main' | 'probe' | 'words' | 'docs'>('main');
 
   if (!open) return <Gate onPass={() => setOpen(true)} onCancel={props.onClose} />;
   if (panel === 'probe') return <TouchProbe onClose={() => setPanel('main')} />;
   if (panel === 'words') return <WordSheet onClose={() => setPanel('main')} />;
+  if (panel === 'docs') return <ActivityDocs onClose={() => setPanel('main')} />;
   return (
     <ParentPanels
       {...props}
       onProbe={() => setPanel('probe')}
       onWords={() => setPanel('words')}
+      onDocs={() => setPanel('docs')}
     />
   );
 }
@@ -78,7 +82,8 @@ function ParentPanels({
   onRestart,
   onProbe,
   onWords,
-}: Props & { onProbe: () => void; onWords: () => void }) {
+  onDocs,
+}: Props & { onProbe: () => void; onWords: () => void; onDocs: () => void }) {
   const [session, setSession] = useState<SessionRecord | null>(null);
   const [recorded, setRecorded] = useState<Set<string>>(new Set());
   const [recordingKey, setRecordingKey] = useState<string | null>(null);
@@ -106,6 +111,12 @@ function ParentPanels({
       <div className="parent-inner">
         <h1>Espace parent</h1>
         <p className="muted">{pack.name}</p>
+
+        <div className="btn-row" style={{ marginTop: 12 }}>
+          <button className="btn" onClick={onDocs}>
+            Les ateliers — à quoi ils servent, quoi faire
+          </button>
+        </div>
 
         <Recap session={session} />
 
@@ -350,6 +361,35 @@ function VoicePanel({
         >
           Effacer mes nombres
         </button>
+      </div>
+
+      <p style={{ marginTop: 24 }}>
+        <strong>Les consignes</strong>
+      </p>
+      <p className="muted">
+        C'est la seule explication que l'enfant reçoit — il n'y a aucun texte à l'écran des
+        ateliers. Tant que vous ne les avez pas enregistrées, elles sont dites par la voix de
+        synthèse.
+      </p>
+
+      <div className="num-grid" style={{ gridTemplateColumns: '1fr' }}>
+        {PROMPT_KEYS.map((key) => {
+          const done = recorded.has(parentVoiceKey(key));
+          return (
+            <button
+              key={key}
+              className="num-cell"
+              data-recorded={done}
+              data-active={recordingKey === key}
+              style={{ justifyContent: 'flex-start', textAlign: 'left', padding: '0 14px', height: 'auto', minHeight: 56 }}
+              onPointerDown={() => void begin(key)}
+              onPointerUp={() => void end(key)}
+              onPointerLeave={() => recordingKey === key && void end(key)}
+            >
+              <span style={{ fontWeight: 400 }}>« {PROMPTS[key]} »</span>
+            </button>
+          );
+        })}
       </div>
 
       {frenchVoice === false && (

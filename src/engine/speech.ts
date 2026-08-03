@@ -11,6 +11,7 @@
  */
 
 import { cachedSound, loadSound, playBuffer, stopPlayback } from './audio';
+import { promptText } from '../content/prompts';
 import { getBlob } from './storage';
 import type { PackCharacter, SpeechKey, UniversePack } from './types';
 
@@ -169,7 +170,10 @@ export function createSpeaker(pack: UniversePack, character: PackCharacter): Spe
       case 'retry':
         return character.lines?.retry ?? 'On recommence.';
       default:
-        return null;
+        // Consignes des ateliers. Sans ce renvoi, toute clé inconnue tombait
+        // silencieusement à `null` : l'atelier restait muet, et rien ne
+        // signalait qu'aucune consigne n'était jamais donnée à l'enfant.
+        return promptText(key);
     }
   }
 

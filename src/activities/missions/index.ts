@@ -246,7 +246,19 @@ class MissionsActivity implements Activity {
         reserveSize(need),
       );
       this.placeSlotsAndTokens();
-      void this.props.speak('mission.charge');
+
+      // La consigne dépend du mode : compléter un camion à moitié plein et en
+      // ajouter deux de plus ne demandent pas la même chose. Elle n'est dite
+      // qu'au premier tour de la série — ensuite la règle est connue.
+      if (this.consumed === 0) {
+        const key =
+          this.config.mode === 'missing'
+            ? 'mission.missing'
+            : this.config.mode === 'addition'
+              ? 'mission.addition'
+              : 'mission.charge';
+        void this.props.speak(key);
+      }
     }
 
     this.invalidate();
