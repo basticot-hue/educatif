@@ -16,7 +16,15 @@
  *   < 60 Hz   élargir fortement, lisser sur 5 points, envisager de repousser
  */
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  loadCalibration,
+  profileFor,
+  saveCalibration,
+  type TouchCalibration,
+} from '../engine/calibration';
+import { setSetting } from '../engine/storage';
+import { CALIBRATION_KEY } from '../engine/calibration';
 
 interface Sample {
   x: number;
@@ -78,6 +86,11 @@ export function TouchProbe({ onClose }: { onClose: () => void }) {
   const samples = useRef<Sample[]>([]);
   const [measure, setMeasure] = useState<Measure | null>(null);
   const [drawing, setDrawing] = useState(false);
+  const [stored, setStored] = useState<TouchCalibration | null>(null);
+
+  useEffect(() => {
+    void loadCalibration().then(setStored);
+  }, []);
 
   const start = useCallback((e: React.PointerEvent) => {
     samples.current = [{ x: e.clientX, y: e.clientY, t: performance.now() }];
@@ -121,13 +134,33 @@ export function TouchProbe({ onClose }: { onClose: () => void }) {
       worstGapMs = Math.max(worstGapMs, list[i].t - list[i - 1].t);
     }
 
-    setMeasure({
+    const result: Measure = {
       hz: durationMs > 0 ? Math.round((list.length / durationMs) * 1000) : 0,
       points: list.length,
       durationMs: Math.round(durationMs),
       jitterPx: Number(jitter(list).toFixed(2)),
       worstGapMs: Math.round(worstGapMs),
-    });
+    };
+    setMeasure(result);
+
+    /*
+     * On **conserve la mesure la plus basse**, jamais la dernière.
+     *
+     * Le couloir du Sable doit tenir sur le pire tracé, pas sur le meilleur :
+     * une dalle qui fait 95 Hz en moyenne mais tombe à 70 sur un geste rapide
+     * couperait la trace précisément là où l'enfant s'applique le plus.
+     */
+    void (async () => {
+      const previous = await loadCalibration();
+      if (!previous || result.hz < previous.hz) {
+        await saveCalibration({
+          hz: result.hz,
+          jitterPx: result.jitterPx,
+          worstGapMs: result.worstGapMs,
+        });
+      }
+      setStored(await loadCalibration());
+    })();
   }, []);
 
   const v = measure ? verdict(measure.hz) : null;
@@ -171,6 +204,25 @@ export function TouchProbe({ onClose }: { onClose: () => void }) {
           </>
         )}
 
+        <h2>Calibration retenue</h2>
+        {stored ? (
+          <>
+            <p>
+              <strong>{stored.hz} Hz</strong> — couloir du Sable élargi de{' '}
+              {Math.round((profileFor(stored).corridorScale - 1) * 100)} %, lissage sur{' '}
+              {profileFor(stored).smoothing} points ({profileFor(stored).label}).
+            </p>
+            <p className="muted">
+              C'est la mesure <strong>la plus basse</strong> qui est gardée, pas la dernière :
+              le couloir doit tenir sur le pire tracé, pas sur le meilleur. Une dalle qui fait
+              95 Hz en moyenne mais tombe à 70 sur un geste rapide couperait la trace
+              précisément là où l'enfant s'applique le plus.
+            </p>
+          </>
+        ) : (
+          <p className="muted">Aucune mesure enregistrée. Le Sable partira d'un réglage prudent.</p>
+        )}
+
         <p className="muted">
           Mesure faite dans DevTools ? Elle ne vaut rien : l'émulation ne reproduit ni la
           latence ni le bruit de la dalle. Utilisez <code>chrome://inspect</code> en USB.
@@ -180,6 +232,18 @@ export function TouchProbe({ onClose }: { onClose: () => void }) {
           <button className="btn ghost" onClick={onClose}>
             Retour
           </button>
+          {stored && (
+            <button
+              className="btn ghost"
+              onClick={async () => {
+                await setSetting(CALIBRATION_KEY, null);
+                setStored(null);
+                setMeasure(null);
+              }}
+            >
+              Recommencer la calibration
+            </button>
+          )}
         </div>
       </div>
     </div>
