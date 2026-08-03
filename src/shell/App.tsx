@@ -91,6 +91,18 @@ export function App() {
       applyPalette(resolved);
       await preloadPack(resolved);
       setPack(resolved);
+
+      /*
+       * Un porte-voix est disponible dès le démarrage, avant même que l'enfant
+       * ait choisi son personnage. Le parent entre souvent directement dans son
+       * espace, où il doit pouvoir écouter un découpage syllabique : sans cela
+       * le bouton « Écouter » resterait muet, et c'est précisément l'écoute qui
+       * lui permet de valider ce qu'il saisit.
+       */
+      if (!speaker.current) {
+        speaker.current = createSpeaker(resolved, resolved.characters[0]);
+      }
+
       setPackReady(true);
     })();
   }, [packVersion]);
@@ -210,6 +222,8 @@ export function App() {
     return (
       <Parent
         pack={pack}
+        basePack={defaultPack()}
+        speaker={speaker.current}
         onPackChanged={() => setPackVersion((v) => v + 1)}
         onClose={() => setStage(stageBeforeParent.current === 'parent' ? 'welcome' : stageBeforeParent.current)}
         onRestart={() => {

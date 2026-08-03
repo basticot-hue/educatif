@@ -12,6 +12,7 @@ import { PROMPTS, PROMPT_KEYS } from '../content/prompts';
 import { isInstalled, canInstall, promptInstall, storageInfo } from '../engine/platform';
 import { NUMBER_KEYS, hasFrenchVoice, numberWord, parentVoiceKey } from '../engine/speech';
 import { blobKeys, clearAll, deleteBlob, getSetting, lastSession, putBlob, setSetting } from '../engine/storage';
+import type { Speaker } from '../engine/speech';
 import type { SessionRecord, UniversePack } from '../engine/types';
 import { micStatus, startRecording, type Recording } from '../engine/voice';
 import { ActivityDocs } from './ActivityDocs';
@@ -25,10 +26,15 @@ const GATE_A = 7;
 const GATE_B = 8;
 
 interface Props {
+  /** Pack effectif, personnages du parent compris. */
   pack: UniversePack;
+  /** Pack embarqué, avant fusion — l'éditeur a besoin de distinguer les deux. */
+  basePack: UniversePack;
+  /** Pour faire écouter un découpage syllabique dans l'éditeur. */
+  speaker: Speaker | null;
   onClose: () => void;
   onRestart: () => void;
-  /** Le pack doit être rechargé : une image de personnage a changé. */
+  /** Le pack doit être rechargé : un personnage a changé. */
   onPackChanged: () => void;
 }
 
@@ -43,7 +49,10 @@ export function Parent(props: Props) {
   if (panel === 'characters') {
     return (
       <Characters
-        pack={props.pack}
+        // Le pack **d'origine** : la liste distingue les mascottes embarquées
+        // des personnages créés, ce que le pack fusionné ne permet plus.
+        pack={props.basePack}
+        speaker={props.speaker}
         onChanged={props.onPackChanged}
         onClose={() => setPanel('main')}
       />
@@ -136,7 +145,7 @@ function ParentPanels({
             Les ateliers — à quoi ils servent, quoi faire
           </button>
           <button className="btn ghost" onClick={onCharacters}>
-            Changer les mascottes
+            Les personnages — ajouter, modifier, masquer
           </button>
         </div>
 

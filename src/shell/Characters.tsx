@@ -1,18 +1,27 @@
 /**
- * Panneau parent : remplacer les images des mascottes.
+ * Panneau parent : les personnages.
  *
- * Les personnages embarqués sont volontairement neutres — ils sont là pour que
- * l'application soit jouable dès le premier lancement, pas pour plaire. Ce sont
- * les images qui comptent le moins dans le dispositif, et les plus faciles à
- * remplacer par ce que l'enfant aime.
+ * Les mascottes embarquées sont volontairement neutres — elles existent pour
+ * que l'application soit jouable au premier lancement, pas pour plaire. Un
+ * enfant s'attache à *ses* héros, et c'est cet attachement qui le fait revenir.
  *
- * On ne touche **jamais** aux métadonnées phonologiques (syllabes, son
- * d'attaque, rime) : elles décrivent le *nom* du personnage, pas son image.
- * Remplacer la photo de Choum ne change pas le fait que « Choum » commence par
- * « chhh » — et c'est cette propriété qui le rend utilisable par Le Sac.
+ * Le parent peut donc remplacer une image, créer ses propres personnages avec
+ * leur nom et leur phonologie, et masquer ceux dont il ne veut pas. Ce qui est
+ * saisi n'est pas décoratif : le découpage syllabique, le son d'attaque et la
+ * rime sont ce qui rend un personnage utilisable par les ateliers de sons.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  customImageKey,
+  deleteCustomCharacter,
+  isContinuant,
+  loadCustomCharacters,
+  loadDisabled,
+  saveCustomCharacter,
+  setDisabled,
+  type CustomCharacter,
+} from '../content/characters';
 import {
   characterImageKey,
   clearCharacterImage,
@@ -20,19 +29,31 @@ import {
   setCharacterImage,
 } from '../content/overrides';
 import { getBlob } from '../engine/storage';
+import type { Speaker } from '../engine/speech';
 import type { UniversePack } from '../engine/types';
+import { CharacterEditor } from './CharacterEditor';
 
 interface Props {
+  /** Pack **d'origine**, sans les personnages du parent déjà fusionnés. */
   pack: UniversePack;
+  speaker: Speaker | null;
   onClose: () => void;
-  /** Rechargement du pack, pour que la substitution soit visible aussitôt. */
   onChanged: () => void;
 }
 
-export function Characters({ pack, onClose, onChanged }: Props) {
-  const [previews, setPreviews] = useState<Record<string, string>>({});
-  const [replaced, setReplaced] = useState<Set<string>>(new Set());
-  const [busy, setBusy] = useState<string | null>(null);
+interface Row {
+  id: string;
+  name: string;
+  detail: string;
+  imageUrl: string | null;
+  custom: CustomCharacter | null;
+  disabled: boolean;
+  replaced: boolean;
+}
+
+export function Characters({ pack, speaker, onClose, onChanged }: Props) {
+  const [rows, setRows] = useState<Row[]>([]);
+  const [editing, setEditing] = useState<CustomCharacter | null | 'new'>(null);
   const [error, setError] = useState<string | null>(null);
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
   const urls = useRef<string[]>([]);
@@ -40,23 +61,49 @@ export function Characters({ pack, onClose, onChanged }: Props) {
   const refresh = useCallback(async () => {
     urls.current.splice(0).forEach(URL.revokeObjectURL);
 
-    const next: Record<string, string> = {};
-    const done = new Set<string>();
+    const [custom, disabled] = await Promise.all([loadCustomCharacters(), loadDisabled()]);
+    const hidden = new Set(disabled);
+    const next: Row[] = [];
 
     for (const character of pack.characters) {
       const blob = await getBlob(characterImageKey(pack.id, character.id));
+      let url: string | null = character.image;
       if (blob) {
-        const url = URL.createObjectURL(blob);
+        url = URL.createObjectURL(blob);
         urls.current.push(url);
-        next[character.id] = url;
-        done.add(character.id);
-      } else {
-        next[character.id] = character.image;
       }
+      next.push({
+        id: character.id,
+        name: character.name,
+        detail: `${character.syllables} morceau${character.syllables > 1 ? 'x' : ''} · son « ${character.onset} » · fin « ${character.rime} »`,
+        imageUrl: url,
+        custom: null,
+        disabled: hidden.has(character.id),
+        replaced: blob !== null,
+      });
     }
 
-    setPreviews(next);
-    setReplaced(done);
+    for (const c of custom) {
+      let url: string | null = null;
+      if (c.imageKey) {
+        const blob = await getBlob(c.imageKey);
+        if (blob) {
+          url = URL.createObjectURL(blob);
+          urls.current.push(url);
+        }
+      }
+      next.push({
+        id: c.id,
+        name: c.name,
+        detail: `${c.split.join('-')} · son « ${c.onset} »${isContinuant(c.onset) ? '' : ' (claque)'} · fin « ${c.rime} »`,
+        imageUrl: url,
+        custom: c,
+        disabled: hidden.has(c.id),
+        replaced: false,
+      });
+    }
+
+    setRows(next);
   }, [pack]);
 
   useEffect(() => {
@@ -66,52 +113,63 @@ export function Characters({ pack, onClose, onChanged }: Props) {
     };
   }, [refresh]);
 
-  const replace = async (characterId: string, file: File | undefined) => {
-    if (!file) return;
-    setError(null);
-    setBusy(characterId);
-    try {
-      await setCharacterImage(pack.id, characterId, file);
-      await refresh();
-      onChanged();
-    } catch {
-      setError(
-        "Ce fichier n'a pas pu être lu. Essayez un PNG ou un JPG classique, " +
-          'pris avec l’appareil photo ou enregistré depuis la galerie.',
-      );
-    } finally {
-      setBusy(null);
-    }
-  };
+  if (editing !== null) {
+    return (
+      <CharacterEditor
+        initial={editing === 'new' ? null : editing}
+        speaker={speaker}
+        onCancel={() => setEditing(null)}
+        onSave={async (character) => {
+          await saveCustomCharacter(character);
+          setEditing(null);
+          await refresh();
+          onChanged();
+        }}
+      />
+    );
+  }
+
+  const active = rows.filter((r) => !r.disabled).length;
 
   return (
     <div className="parent">
       <div className="parent-inner">
-        <h1>Les mascottes</h1>
+        <h1>Les personnages</h1>
         <p>
-          Remplacez l'image d'un personnage par une photo ou un dessin. Le fichier reste sur
-          la tablette, dans l'application — rien n'est envoyé nulle part.
+          L'enfant choisit le sien au début de chaque séance. Ajoutez les vôtres — c'est
+          l'attachement à ses héros qui le fait revenir.
         </p>
         <p className="muted">
-          Formats acceptés : PNG, JPG, WebP. L'image est automatiquement réduite à{' '}
-          {MAX_IMAGE_SIDE} px et réencodée en PNG — une photo de tablette fait plusieurs
-          mégaoctets et ferait saccader les ateliers. Un <strong>fond transparent</strong> rend
-          bien mieux : le personnage se pose sur les cases au lieu d'apparaître dans un carré.
+          Tout reste sur la tablette. Les images sont réduites à {MAX_IMAGE_SIDE} px ; un fond
+          transparent rend bien mieux qu'un carré blanc.
         </p>
 
         {error && <div className="callout">{error}</div>}
 
+        {active === 0 && (
+          <div className="callout">
+            Tous les personnages sont masqués. L'accueil réafficherait les mascottes d'origine
+            plutôt que de rester vide — il en faut au moins un.
+          </div>
+        )}
+
+        <div className="btn-row">
+          <button className="btn" onClick={() => setEditing('new')}>
+            Ajouter un personnage
+          </button>
+        </div>
+
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
             gap: 16,
             marginTop: 16,
           }}
         >
-          {pack.characters.map((character) => (
+          {rows.map((row) => (
             <figure
-              key={character.id}
+              key={row.id}
               style={{
                 margin: 0,
                 background: '#fff',
@@ -119,66 +177,71 @@ export function Characters({ pack, onClose, onChanged }: Props) {
                 borderRadius: 10,
                 padding: 12,
                 textAlign: 'center',
+                opacity: row.disabled ? 0.5 : 1,
               }}
             >
-              <div
-                style={{
-                  height: 130,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  // Damier discret : rend la transparence visible d'un coup d'œil.
-                  backgroundImage:
-                    'linear-gradient(45deg,#eceff3 25%,transparent 25%,transparent 75%,#eceff3 75%),' +
-                    'linear-gradient(45deg,#eceff3 25%,transparent 25%,transparent 75%,#eceff3 75%)',
-                  backgroundSize: '16px 16px',
-                  backgroundPosition: '0 0, 8px 8px',
-                  borderRadius: 8,
-                }}
-              >
-                {previews[character.id] && (
-                  <img
-                    src={previews[character.id]}
-                    alt=""
-                    style={{ maxHeight: '100%', maxWidth: '100%' }}
-                  />
+              <div className="image-slot" style={{ width: '100%', height: 130 }}>
+                {row.imageUrl ? (
+                  <img src={row.imageUrl} alt="" />
+                ) : (
+                  <span className="muted">aucune image</span>
                 )}
               </div>
 
               <figcaption style={{ marginTop: 8 }}>
-                <strong>{character.name}</strong>
+                <strong>{row.name}</strong>
                 <br />
                 <span className="muted" style={{ fontSize: 13 }}>
-                  {character.syllables} syll. · son « {character.onset} » · rime « {character.rime} »
+                  {row.detail}
                 </span>
               </figcaption>
 
               <input
                 ref={(node) => {
-                  inputs.current[character.id] = node;
+                  inputs.current[row.id] = node;
                 }}
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
                 style={{ display: 'none' }}
-                onChange={(e) => {
-                  void replace(character.id, e.target.files?.[0]);
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
                   e.target.value = '';
+                  if (!file) return;
+                  setError(null);
+                  try {
+                    if (row.custom) {
+                      const { normalizeImage } = await import('../content/overrides');
+                      const { putBlob } = await import('../engine/storage');
+                      const key = customImageKey(row.id);
+                      await putBlob(key, await normalizeImage(file));
+                      await saveCustomCharacter({ ...row.custom, imageKey: key });
+                    } else {
+                      await setCharacterImage(pack.id, row.id, file);
+                    }
+                    await refresh();
+                    onChanged();
+                  } catch {
+                    setError(
+                      "Ce fichier n'a pas pu être lu. Essayez un PNG ou un JPG classique.",
+                    );
+                  }
                 }}
               />
 
               <div className="btn-row" style={{ justifyContent: 'center', marginTop: 10 }}>
-                <button
-                  className="btn"
-                  disabled={busy === character.id}
-                  onClick={() => inputs.current[character.id]?.click()}
-                >
-                  {busy === character.id ? 'Un instant…' : 'Remplacer'}
+                <button className="btn" onClick={() => inputs.current[row.id]?.click()}>
+                  Image
                 </button>
-                {replaced.has(character.id) && (
+                {row.custom && (
+                  <button className="btn ghost" onClick={() => setEditing(row.custom)}>
+                    Modifier
+                  </button>
+                )}
+                {!row.custom && row.replaced && (
                   <button
                     className="btn ghost"
                     onClick={async () => {
-                      await clearCharacterImage(pack.id, character.id);
+                      await clearCharacterImage(pack.id, row.id);
                       await refresh();
                       onChanged();
                     }}
@@ -187,17 +250,41 @@ export function Characters({ pack, onClose, onChanged }: Props) {
                   </button>
                 )}
               </div>
+
+              <div className="btn-row" style={{ justifyContent: 'center', marginTop: 6 }}>
+                <button
+                  className="btn ghost"
+                  onClick={async () => {
+                    await setDisabled(row.id, !row.disabled);
+                    await refresh();
+                    onChanged();
+                  }}
+                >
+                  {row.disabled ? 'Réafficher' : 'Masquer'}
+                </button>
+                {row.custom && (
+                  <button
+                    className="btn danger"
+                    onClick={async () => {
+                      if (!confirm(`Supprimer ${row.name} définitivement ?`)) return;
+                      await deleteCustomCharacter(row.id);
+                      await refresh();
+                      onChanged();
+                    }}
+                  >
+                    Supprimer
+                  </button>
+                )}
+              </div>
             </figure>
           ))}
         </div>
 
         <div className="callout" style={{ marginTop: 24 }}>
-          Le <strong>nom</strong> du personnage ne change pas, et c'est voulu. « Choum »
-          commence par le son « chhh », « Mila » par « mmm » — ces propriétés sont ce qui rend
-          les personnages utilisables par les ateliers de sons. Mettre la photo d'un autre
-          héros sur Choum ne pose aucun problème tant que l'enfant continue de l'appeler
-          Choum ; si vous voulez de vrais nouveaux personnages, il faudra un pack complet,
-          avec leurs syllabes et leurs sons.
+          Le <strong>découpage</strong> et le <strong>son d'attaque</strong> ne sont pas de la
+          décoration : ce sont eux qui rendent un personnage utilisable par les ateliers de
+          sons. Prenez le temps d'écouter le découpage avant de valider — c'est votre oreille
+          qui décide, pas la proposition automatique.
         </div>
 
         <div className="btn-row">

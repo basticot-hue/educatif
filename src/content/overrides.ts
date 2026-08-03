@@ -10,6 +10,7 @@
 
 import { deleteBlob, getBlob, putBlob } from '../engine/storage';
 import type { PackCharacter, UniversePack } from '../engine/types';
+import { mergeCharacters } from './characters';
 
 /**
  * Côté maximal d'une image importée.
@@ -93,7 +94,9 @@ export async function applyOverrides(pack: UniversePack): Promise<UniversePack> 
     }),
   );
 
-  return { ...pack, characters };
+  // Puis les personnages créés par le parent, dans le même format : aucun
+  // atelier ne sait d'où vient un personnage.
+  return mergeCharacters({ ...pack, characters }, (url) => objectUrls.push(url));
 }
 
 /** À appeler avant de recalculer les substitutions, pour ne pas fuir. */
