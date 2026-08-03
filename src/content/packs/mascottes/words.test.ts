@@ -1,12 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import {
   CONSONANT_ONSETS,
+  MIN_PER_ONSET,
   WORDS,
   continuants,
+  onsetGroups,
   rhymeFamilies,
   withConsonantOnset,
   wordsWithSyllables,
 } from './words';
+
+/** Les sons qui se tiennent, d'après les données du pack. */
+const CONTINUANT_SET = new Set(WORDS.filter((w) => w.continuant).map((w) => w.onset));
 
 describe('données phonologiques des mots', () => {
   it('accorde le découpage et le nombre de syllabes', () => {
@@ -72,12 +77,27 @@ describe('attaques', () => {
     expect(onsets.size).toBeGreaterThanOrEqual(4);
   });
 
-  it('garde au moins deux mots par attaque continue utilisable', () => {
-    const byOnset = new Map<string, number>();
-    for (const word of continuants()) byOnset.set(word.onset, (byOnset.get(word.onset) ?? 0) + 1);
-    // Un sac qui n'aurait qu'un seul objet serait deviné du premier coup.
-    const usable = [...byOnset.values()].filter((n) => n >= 2);
-    expect(usable.length).toBeGreaterThanOrEqual(2);
+  it('offre assez de sons continus tenables pour un vrai atelier', () => {
+    /*
+     * Le Sac oppose des sons entre eux. Avec deux sons seulement, l'enfant
+     * finit par répondre au hasard une fois sur deux et réussit la moitié du
+     * temps sans rien entendre. Il en faut assez pour varier les paires.
+     */
+    const groups = onsetGroups({ continuantOnly: true });
+    expect(groups.size).toBeGreaterThanOrEqual(6);
+  });
+
+  it("n'expose aucun son n'ayant qu'un seul mot", () => {
+    // Un sac à un seul objet possible se devine du premier coup.
+    for (const [onset, list] of onsetGroups({ continuantOnly: false })) {
+      expect(list.length, onset).toBeGreaterThanOrEqual(MIN_PER_ONSET);
+    }
+  });
+
+  it('couvre les occlusives pour les niveaux hauts', () => {
+    const all = onsetGroups({ continuantOnly: false });
+    const occlusives = [...all.keys()].filter((o) => !CONTINUANT_SET.has(o));
+    expect(occlusives.length).toBeGreaterThanOrEqual(4);
   });
 
   it("stocke un son d'attaque, jamais un nom de lettre", () => {
