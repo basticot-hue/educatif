@@ -1,0 +1,92 @@
+/* La Fabrique. Aucun texte : l'enfant ne lit pas. */
+
+.fabrique {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap);
+  padding: var(--gap);
+}
+
+/* Cibles très larges : ce sont les seules choses à toucher de l'écran. */
+.big-round {
+  width: min(28vh, 168px);
+  height: min(28vh, 168px);
+  min-width: var(--target);
+  min-height: var(--target);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--t-fast) ease-out;
+}
+
+.big-round.small {
+  width: min(18vh, 108px);
+  height: min(18vh, 108px);
+}
+
+.big-round svg {
+  width: 52%;
+  height: 52%;
+}
+
+.big-round:active {
+  transform: scale(0.94);
+}
+
+/*
+ * L'enfant parle : un anneau calme, sans compte à rebours ni jauge. Rien ne
+ * doit suggérer qu'il est chronométré.
+ */
+.big-round.listening {
+  background: var(--accent);
+  outline: 6px solid var(--accent);
+  outline-offset: 8px;
+}
+
+.fab-canvas {
+  flex: 1;
+  width: 100%;
+  max-width: 640px;
+  min-height: 0;
+  border-radius: var(--radius);
+  /*
+   * Damier discret : c'est ce qui rend le détourage lisible. Sans lui, l'enfant
+   * gomme sur du bleu nuit et ne voit pas ce qu'il enlève.
+   */
+  background-image:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.09) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.09) 75%),
+    linear-gradient(45deg, rgba(255, 255, 255, 0.09) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.09) 75%);
+  background-size: 28px 28px;
+  background-position: 0 0, 14px 14px;
+  touch-action: none;
+}
+
+/* À l'étape du nom, l'image ne se touche plus : on la regarde. */
+.fab-canvas.preview {
+  pointer-events: none;
+  max-height: 46vh;
+}
+
+.fab-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--gap) * 1.5);
+}
+
+/* Repère muet de ce qui a été fabriqué pendant la séance. Pas un score. */
+.fab-count {
+  position: absolute;
+  bottom: var(--gap);
+  left: var(--gap);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.4;
+}

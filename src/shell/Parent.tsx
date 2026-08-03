@@ -27,6 +27,7 @@ import type { SessionRecord, UniversePack } from '../engine/types';
 import { micStatus, startRecording, type Recording } from '../engine/voice';
 import { ActivityDocs } from './ActivityDocs';
 import { Characters } from './Characters';
+import { Objects } from './Objects';
 import { TouchProbe } from './TouchProbe';
 import { WordSheet } from './WordSheet';
 import './parent.css';
@@ -50,12 +51,17 @@ interface Props {
 
 export function Parent(props: Props) {
   const [open, setOpen] = useState(false);
-  const [panel, setPanel] = useState<'main' | 'probe' | 'words' | 'docs' | 'characters'>('main');
+  const [panel, setPanel] = useState<
+    'main' | 'probe' | 'words' | 'docs' | 'characters' | 'objects'
+  >('main');
 
   if (!open) return <Gate onPass={() => setOpen(true)} onCancel={props.onClose} />;
   if (panel === 'probe') return <TouchProbe onClose={() => setPanel('main')} />;
   if (panel === 'words') return <WordSheet onClose={() => setPanel('main')} />;
   if (panel === 'docs') return <ActivityDocs onClose={() => setPanel('main')} />;
+  if (panel === 'objects') {
+    return <Objects speaker={props.speaker} onClose={() => setPanel('main')} />;
+  }
   if (panel === 'characters') {
     return (
       <Characters
@@ -75,6 +81,7 @@ export function Parent(props: Props) {
       onWords={() => setPanel('words')}
       onDocs={() => setPanel('docs')}
       onCharacters={() => setPanel('characters')}
+      onObjects={() => setPanel('objects')}
     />
   );
 }
@@ -116,11 +123,13 @@ function ParentPanels({
   onWords,
   onDocs,
   onCharacters,
+  onObjects,
 }: Props & {
   onProbe: () => void;
   onWords: () => void;
   onDocs: () => void;
   onCharacters: () => void;
+  onObjects: () => void;
 }) {
   const [session, setSession] = useState<SessionRecord | null>(null);
   const [recorded, setRecorded] = useState<Set<string>>(new Set());
@@ -156,6 +165,9 @@ function ParentPanels({
           </button>
           <button className="btn ghost" onClick={onCharacters}>
             Les personnages — ajouter, modifier, masquer
+          </button>
+          <button className="btn ghost" onClick={onObjects}>
+            Les objets de l'enfant — à compléter
           </button>
         </div>
 

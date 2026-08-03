@@ -62,15 +62,37 @@ function SyllabesIcon() {
   );
 }
 
-const ICONS: Partial<Record<ActivityId, () => React.ReactElement>> = {
+/** Un appareil photo et un objet : ce qu'on y fait, sans un mot. */
+function FabriqueIcon() {
+  return (
+    <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect x="20" y="34" width="86" height="60" rx="10" fill="#12212E" opacity="0.14" />
+      <rect x="46" y="24" width="34" height="14" rx="4" fill="#12212E" opacity="0.14" />
+      <circle cx="63" cy="64" r="20" fill="#12212E" opacity="0.3" />
+      <circle cx="63" cy="64" r="11" fill="#E4B429" />
+      <path d="M126 88 L152 42 L178 88 Z" fill="#E4B429" />
+      <circle cx="152" cy="30" r="9" fill="#12212E" opacity="0.4" />
+    </svg>
+  );
+}
+
+/**
+ * L'étagère ne présente pas que des ateliers : la Fabrique et le Studio sont
+ * des espaces libres, sans niveau ni évaluation, et se choisissent exactement
+ * de la même façon. C'est l'enfant qui décide.
+ */
+export type ShelfId = ActivityId | 'fabrique' | 'studio';
+
+const ICONS: Partial<Record<ShelfId, () => React.ReactElement>> = {
   chemin: CheminIcon,
   missions: MissionsIcon,
   syllabes: SyllabesIcon,
+  fabrique: FabriqueIcon,
 };
 
 interface Props {
-  available: ActivityId[];
-  onPick: (id: ActivityId) => void;
+  available: ShelfId[];
+  onPick: (id: ShelfId) => void;
 }
 
 export function Shelf({ available, onPick }: Props) {

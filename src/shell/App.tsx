@@ -28,10 +28,11 @@ import type {
 import { saveChildVoice, startRecording } from '../engine/voice';
 import { ActivityHost } from './ActivityHost';
 import { EndScreen } from './EndScreen';
+import { Fabrique } from './Fabrique';
 import { Interlude } from './Interlude';
 import { Parent } from './Parent';
 import { ParentDoor } from './ParentDoor';
-import { Shelf } from './Shelf';
+import { Shelf, type ShelfId } from './Shelf';
 import { Welcome } from './Welcome';
 import './shell.css';
 
@@ -40,6 +41,8 @@ type Stage =
   | 'welcome'
   | 'shelf'
   | 'activity'
+  | 'fabrique'
+  | 'studio'
   | 'interlude'
   | 'mission'
   | 'end'
@@ -186,7 +189,16 @@ export function App() {
   }, []);
 
   const onPickActivity = useCallback(
-    (id: ActivityId) => {
+    (id: ShelfId) => {
+      /*
+       * La Fabrique et le Studio ne sont pas des ateliers : ils ne produisent
+       * aucun résultat, ne font monter aucun niveau, et ne comptent pas comme
+       * une série. L'enfant y va quand il veut, aussi longtemps qu'il veut.
+       */
+      if (id === 'fabrique' || id === 'studio') {
+        setStage(id);
+        return;
+      }
       void startSeries(id);
     },
     [startSeries],
@@ -270,7 +282,11 @@ export function App() {
 
       {stage === 'welcome' && <Welcome pack={pack} onPick={(c) => void onPickCharacter(c)} />}
 
-      {stage === 'shelf' && <Shelf available={AVAILABLE_IDS} onPick={onPickActivity} />}
+      {stage === 'shelf' && (
+        <Shelf available={[...AVAILABLE_IDS, 'fabrique']} onPick={onPickActivity} />
+      )}
+
+      {stage === 'fabrique' && <Fabrique onDone={() => setStage('shelf')} />}
 
       {stage === 'activity' && character && (
         <ActivityHost
