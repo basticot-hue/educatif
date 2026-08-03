@@ -14,6 +14,7 @@ import { blobKeys, clearAll, deleteBlob, getSetting, lastSession, putBlob, setSe
 import type { SessionRecord, UniversePack } from '../engine/types';
 import { micStatus, startRecording, type Recording } from '../engine/voice';
 import { TouchProbe } from './TouchProbe';
+import { WordSheet } from './WordSheet';
 import './parent.css';
 
 /** Une opération simple : rien à retenir, et hors de portée d'un enfant de 3 ans. */
@@ -28,11 +29,18 @@ interface Props {
 
 export function Parent(props: Props) {
   const [open, setOpen] = useState(false);
-  const [probe, setProbe] = useState(false);
+  const [panel, setPanel] = useState<'main' | 'probe' | 'words'>('main');
 
   if (!open) return <Gate onPass={() => setOpen(true)} onCancel={props.onClose} />;
-  if (probe) return <TouchProbe onClose={() => setProbe(false)} />;
-  return <ParentPanels {...props} onProbe={() => setProbe(true)} />;
+  if (panel === 'probe') return <TouchProbe onClose={() => setPanel('main')} />;
+  if (panel === 'words') return <WordSheet onClose={() => setPanel('main')} />;
+  return (
+    <ParentPanels
+      {...props}
+      onProbe={() => setPanel('probe')}
+      onWords={() => setPanel('words')}
+    />
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -64,7 +72,13 @@ function Gate({ onPass, onCancel }: { onPass: () => void; onCancel: () => void }
 
 /* ------------------------------------------------------------------ */
 
-function ParentPanels({ pack, onClose, onRestart, onProbe }: Props & { onProbe: () => void }) {
+function ParentPanels({
+  pack,
+  onClose,
+  onRestart,
+  onProbe,
+  onWords,
+}: Props & { onProbe: () => void; onWords: () => void }) {
   const [session, setSession] = useState<SessionRecord | null>(null);
   const [recorded, setRecorded] = useState<Set<string>>(new Set());
   const [recordingKey, setRecordingKey] = useState<string | null>(null);
@@ -150,6 +164,9 @@ function ParentPanels({ pack, onClose, onRestart, onProbe }: Props & { onProbe: 
         <div className="btn-row">
           <button className="btn ghost" onClick={onProbe}>
             Sonde tactile
+          </button>
+          <button className="btn ghost" onClick={onWords}>
+            Vérifier les images
           </button>
           <button
             className="btn danger"
