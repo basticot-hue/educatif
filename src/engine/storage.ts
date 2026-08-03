@@ -57,11 +57,28 @@ interface Schema extends DBSchema {
   };
 }
 
-let dbPromise: Promise<IDBPDatabase<Schema>> | null = null;
+let dbPromise: Promise<IDBPDatabase<Schema> | null> | null = null;
+let openFailed = false;
 
-function db() {
+/**
+ * Délai au-delà duquel on renonce à ouvrir la base.
+ *
+ * Une ouverture IndexedDB peut **bloquer indéfiniment** : c'est le cas quand
+ * une autre fenêtre du même site garde une version antérieure ouverte et
+ * empêche la migration. Sans ce garde-fou, l'application attendait pour
+ * toujours et n'affichait jamais rien — un écran uni, sans erreur, sans
+ * explication. C'est le pire mode de panne possible.
+ */
+const OPEN_TIMEOUT_MS = 4000;
+
+/** Vrai si la base n'a pas pu s'ouvrir : la séance tourne sans rien enregistrer. */
+export function storageUnavailable(): boolean {
+  return openFailed;
+}
+
+function db(): Promise<IDBPDatabase<Schema> | null> {
   if (!dbPromise) {
-    dbPromise = openDB<Schema>(DB_NAME, DB_VERSION, {
+    const opening = openDB<Schema>(DB_NAME, DB_VERSION, {
       // Les migrations sont cumulatives et sans `break` : une tablette restée
       // en version 1 doit pouvoir passer directement à la dernière sans perdre
       // la progression ni les enregistrements déjà faits.
@@ -80,52 +97,102 @@ function db() {
           treasures.createIndex('by-date', 'createdAt');
         }
       },
+
+      /**
+       * Une autre fenêtre du même site veut migrer la base, et **nous** la
+       * bloquons. On ferme aussitôt : sans cela, l'application installée reste
+       * coincée au démarrage tant que l'onglet du navigateur est ouvert.
+       */
+      blocking(_currentVersion, _blockedVersion, event) {
+        (event.target as unknown as IDBPDatabase<Schema>)?.close?.();
+        dbPromise = null;
+      },
+
+      /** Le cas inverse : c'est nous qui attendons. Le délai ci-dessous tranche. */
+      blocked() {
+        // Rien à faire ici : on ne peut pas fermer la connexion d'autrui.
+      },
+
+      /** Connexion perdue (onglet en veille prolongée, éviction) : on rouvrira. */
+      terminated() {
+        dbPromise = null;
+      },
+    });
+
+    /*
+     * On ne laisse jamais l'ouverture bloquer la séance. Si elle n'aboutit pas,
+     * l'application continue de tourner **sans persistance** : l'enfant joue,
+     * rien n'est enregistré, et le parent en est averti dans son espace. Cela
+     * vaut infiniment mieux qu'un écran uni qui n'explique rien.
+     */
+    dbPromise = Promise.race([
+      opening.catch(() => null),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), OPEN_TIMEOUT_MS)),
+    ]).then((database) => {
+      if (!database) openFailed = true;
+      return database;
     });
   }
   return dbPromise;
 }
 
+/** Exécute une opération sur la base, ou rend `fallback` si elle est indisponible. */
+async function withDb<T>(
+  run: (database: IDBPDatabase<Schema>) => Promise<T>,
+  fallback: T,
+): Promise<T> {
+  const database = await db();
+  if (!database) return fallback;
+  try {
+    return await run(database);
+  } catch {
+    // Quota dépassé, transaction avortée : la séance continue sans enregistrer.
+    return fallback;
+  }
+}
+
 /* ---------------- maîtrise ---------------- */
 
 export async function loadMastery(skill: SkillId): Promise<Mastery> {
-  const found = await (await db()).get('mastery', skill);
+  const found = await withDb((d) => d.get('mastery', skill), undefined);
   return found ?? { skill, level: 0, streak: 0, failures: 0 };
 }
 
 export async function loadAllMastery(): Promise<Mastery[]> {
-  return (await db()).getAll('mastery');
+  return withDb((d) => d.getAll('mastery'), []);
 }
 
 export async function saveMastery(m: Mastery): Promise<void> {
-  await (await db()).put('mastery', m);
+  await withDb((d) => d.put('mastery', m), undefined);
 }
 
 /* ---------------- répétition espacée ---------------- */
 
 export async function loadSchedules(skill: SkillId): Promise<ItemSchedule[]> {
-  return (await db()).getAllFromIndex('items', 'by-skill', skill);
+  return withDb((d) => d.getAllFromIndex('items', 'by-skill', skill), []);
 }
 
 export async function saveSchedule(s: ItemSchedule): Promise<void> {
-  await (await db()).put('items', s);
+  await withDb((d) => d.put('items', s), undefined);
 }
 
 /* ---------------- séances ---------------- */
 
 export async function saveSession(s: SessionRecord): Promise<void> {
-  await (await db()).put('sessions', s);
+  await withDb((d) => d.put('sessions', s), undefined);
 }
 
 /** Les `count` séances les plus récentes, de la plus récente à la plus ancienne. */
 export async function recentSessions(count: number): Promise<SessionRecord[]> {
-  const database = await db();
-  const out: SessionRecord[] = [];
-  let cursor = await database.transaction('sessions').store.openCursor(null, 'prev');
-  while (cursor && out.length < count) {
-    out.push(cursor.value);
-    cursor = await cursor.continue();
-  }
-  return out;
+  return withDb(async (database) => {
+    const out: SessionRecord[] = [];
+    let cursor = await database.transaction('sessions').store.openCursor(null, 'prev');
+    while (cursor && out.length < count) {
+      out.push(cursor.value);
+      cursor = await cursor.continue();
+    }
+    return out;
+  }, []);
 }
 
 export async function lastSession(): Promise<SessionRecord | null> {
@@ -135,42 +202,43 @@ export async function lastSession(): Promise<SessionRecord | null> {
 /* ---------------- blobs ---------------- */
 
 export async function putBlob(key: string, blob: Blob): Promise<void> {
-  await (await db()).put('blobs', { key, blob, createdAt: Date.now() });
+  await withDb((d) => d.put('blobs', { key, blob, createdAt: Date.now() }), undefined);
 }
 
 export async function getBlob(key: string): Promise<Blob | null> {
-  return (await (await db()).get('blobs', key))?.blob ?? null;
+  const row = await withDb((d) => d.get('blobs', key), undefined);
+  return row?.blob ?? null;
 }
 
 export async function deleteBlob(key: string): Promise<void> {
-  await (await db()).delete('blobs', key);
+  await withDb((d) => d.delete('blobs', key), undefined);
 }
 
 /** Les clés présentes, pour que l'espace parent sache ce qui reste à enregistrer. */
 export async function blobKeys(prefix = ''): Promise<string[]> {
-  const keys = await (await db()).getAllKeys('blobs');
+  const keys = await withDb((d) => d.getAllKeys('blobs'), []);
   return keys.filter((k) => k.startsWith(prefix));
 }
 
 /* ---------------- réglages ---------------- */
 
 export async function getSetting<T>(key: string, fallback: T): Promise<T> {
-  const row = await (await db()).get('settings', key);
+  const row = await withDb((d) => d.get('settings', key), undefined);
   return row === undefined ? fallback : (row.value as T);
 }
 
 export async function setSetting(key: string, value: unknown): Promise<void> {
-  await (await db()).put('settings', { key, value });
+  await withDb((d) => d.put('settings', { key, value }), undefined);
 }
 
 /* ---------------- objets de la Fabrique ---------------- */
 
 export async function saveObject(o: ChildObject): Promise<void> {
-  await (await db()).put('objects', o);
+  await withDb((d) => d.put('objects', o), undefined);
 }
 
 export async function allObjects(): Promise<ChildObject[]> {
-  return (await db()).getAll('objects');
+  return withDb((d) => d.getAll('objects'), []);
 }
 
 /**
@@ -182,59 +250,63 @@ export async function usableObjects(): Promise<ChildObject[]> {
 }
 
 export async function deleteObject(id: string): Promise<void> {
-  const database = await db();
-  const object = await database.get('objects', id);
-  if (object) {
-    // Sans cela les blobs associés fuiraient — ce sont de loin les plus gros.
-    await database.delete('blobs', object.image);
-    if (object.audioLabel) await database.delete('blobs', object.audioLabel);
-  }
-  await database.delete('objects', id);
+  await withDb(async (database) => {
+    const object = await database.get('objects', id);
+    if (object) {
+      // Sans cela les blobs associés fuiraient — ce sont de loin les plus gros.
+      await database.delete('blobs', object.image);
+      if (object.audioLabel) await database.delete('blobs', object.audioLabel);
+    }
+    await database.delete('objects', id);
+  }, undefined);
 }
 
 /* ---------------- mur des trésors ---------------- */
 
 export async function addTreasure(t: Treasure): Promise<void> {
-  await (await db()).put('treasures', t);
+  await withDb((d) => d.put('treasures', t), undefined);
 }
 
 /** Du plus récent au plus ancien. */
 export async function allTreasures(): Promise<Treasure[]> {
-  const list = await (await db()).getAllFromIndex('treasures', 'by-date');
-  return list.reverse();
+  const list = await withDb((d) => d.getAllFromIndex('treasures', 'by-date'), []);
+  return [...list].reverse();
 }
 
 export async function deleteTreasure(id: string): Promise<void> {
-  const database = await db();
-  const treasure = await database.get('treasures', id);
-  if (treasure) {
-    if (treasure.image) await database.delete('blobs', treasure.image);
-    if (treasure.audio) await database.delete('blobs', treasure.audio);
-  }
-  await database.delete('treasures', id);
+  await withDb(async (database) => {
+    const treasure = await database.get('treasures', id);
+    if (treasure) {
+      if (treasure.image) await database.delete('blobs', treasure.image);
+      if (treasure.audio) await database.delete('blobs', treasure.audio);
+    }
+    await database.delete('treasures', id);
+  }, undefined);
 }
 
 /* ---------------- utilitaires ---------------- */
 
 /** Utilisé par les tests, et par le bouton de remise à zéro de l'espace parent. */
 export async function clearAll(): Promise<void> {
-  const database = await db();
-  const stores = [
-    'mastery',
-    'items',
-    'sessions',
-    'blobs',
-    'settings',
-    'objects',
-    'treasures',
-  ] as const;
-  const tx = database.transaction(stores, 'readwrite');
-  await Promise.all(stores.map((s) => tx.objectStore(s).clear()));
-  await tx.done;
+  await withDb(async (database) => {
+    const stores = [
+      'mastery',
+      'items',
+      'sessions',
+      'blobs',
+      'settings',
+      'objects',
+      'treasures',
+    ] as const;
+    const tx = database.transaction(stores, 'readwrite');
+    await Promise.all(stores.map((s) => tx.objectStore(s).clear()));
+    await tx.done;
+  }, undefined);
 }
 
 export function resetConnectionForTests(): void {
   dbPromise = null;
+  openFailed = false;
 }
 
 /** Journalise un résultat dans la séance courante. Simple agrégat, pas de calcul. */

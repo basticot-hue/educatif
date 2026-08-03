@@ -86,10 +86,33 @@ export function App() {
    */
   useEffect(() => {
     void (async () => {
-      releaseOverrideUrls();
-      const resolved = await applyOverrides(defaultPack());
+      /*
+       * Le démarrage ne doit **jamais** laisser un écran uni.
+       *
+       * Une version antérieure enchaînait ces appels sans filet : si l'un
+       * d'eux échouait ou n'aboutissait pas — typiquement l'ouverture de la
+       * base, qui reste bloquée tant qu'une autre fenêtre retient une version
+       * antérieure — l'application restait indéfiniment sur son fond bleu. En
+       * plein écran, sans barre de navigateur, cela ressemble à une
+       * application qui ne se lance pas du tout.
+       *
+       * Désormais, quoi qu'il arrive, on arrive à l'accueil. La séance tourne,
+       * simplement sans rien enregistrer, et le parent en est averti.
+       */
+      let resolved = defaultPack();
+      try {
+        releaseOverrideUrls();
+        resolved = await applyOverrides(defaultPack());
+      } catch {
+        // Personnages et images du parent indisponibles : on garde le pack embarqué.
+      }
+
       applyPalette(resolved);
-      await preloadPack(resolved);
+      try {
+        await preloadPack(resolved);
+      } catch {
+        // Une image manquante n'empêche pas de jouer.
+      }
       setPack(resolved);
 
       /*
@@ -113,7 +136,12 @@ export function App() {
     void (async () => {
       // Une séance terminée il y a moins d'une heure ne se rejoue pas : pas
       // d'apprentissage à la chaîne, et surtout pas de réclamation quotidienne.
-      const blocked = await recentlyFinished();
+      let blocked = false;
+      try {
+        blocked = await recentlyFinished();
+      } catch {
+        // Sans historique lisible, on laisse jouer plutôt que de refuser.
+      }
       relaunchBlocked.current = blocked;
       setStage((current) => (current === 'boot' ? (blocked ? 'end' : 'welcome') : current));
     })();

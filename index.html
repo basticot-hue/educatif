@@ -16,7 +16,44 @@
     <title>Educatif</title>
   </head>
   <body>
-    <div id="root"></div>
+    <!--
+      Filet de secours : ce contenu est remplacé dès que l'application monte.
+      S'il reste visible, c'est que le script n'a pas pu se charger ou s'exécuter
+      — un écran uni ne dirait rien, et sur une application installée en plein
+      écran, sans barre de navigateur, cela ressemble à un lancement qui échoue.
+    -->
+    <div id="root">
+      <div id="boot-fallback">
+        <p>L'application n'a pas réussi à démarrer.</p>
+        <p>
+          Vérifiez la connexion, puis fermez et rouvrez l'application. Si elle est aussi
+          ouverte dans un onglet de Chrome, fermez cet onglet d'abord.
+        </p>
+      </div>
+    </div>
+    <style>
+      #boot-fallback {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 32px;
+        text-align: center;
+        color: #ffffff;
+        font: 16px/1.5 system-ui, sans-serif;
+        /* Laisse le temps au script de monter : on n'alarme pas pour rien. */
+        opacity: 0;
+        animation: boot-fallback-in 1ms linear 6s forwards;
+      }
+      @keyframes boot-fallback-in {
+        to {
+          opacity: 0.75;
+        }
+      }
+    </style>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

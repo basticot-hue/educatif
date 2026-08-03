@@ -11,7 +11,16 @@ import { missionById } from '../content/missions';
 import { PROMPTS, PROMPT_KEYS } from '../content/prompts';
 import { isInstalled, canInstall, promptInstall, storageInfo } from '../engine/platform';
 import { NUMBER_KEYS, hasFrenchVoice, numberWord, parentVoiceKey } from '../engine/speech';
-import { blobKeys, clearAll, deleteBlob, getSetting, lastSession, putBlob, setSetting } from '../engine/storage';
+import {
+  blobKeys,
+  clearAll,
+  deleteBlob,
+  getSetting,
+  lastSession,
+  putBlob,
+  setSetting,
+  storageUnavailable,
+} from '../engine/storage';
 import type { Speaker } from '../engine/speech';
 import type { SessionRecord, UniversePack } from '../engine/types';
 import { micStatus, startRecording, type Recording } from '../engine/voice';
@@ -454,6 +463,17 @@ function TechPanel({
   return (
     <>
       <h2>État technique</h2>
+
+      {storageUnavailable() && (
+        <div className="callout">
+          <strong>La progression ne s'enregistre pas.</strong> La base de données n'a pas pu
+          s'ouvrir. La cause la plus fréquente : l'application est <strong>aussi ouverte dans
+          un onglet de Chrome</strong>, ce qui empêche la mise à jour de la base. Fermez cet
+          onglet, puis relancez l'application depuis son icône. L'enfant peut jouer en
+          attendant — simplement, rien ne sera conservé.
+        </div>
+      )}
+
       <div className="status">
         <span className={`dot ${installed ? 'ok' : 'warn'}`} />
         <span>
