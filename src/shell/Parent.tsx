@@ -199,6 +199,30 @@ function ParentPanels({
           }}
         />
 
+          <h2>Si l'icône ne lance rien</h2>
+        <p>
+          Une application installée <strong>garde le réglage avec lequel elle a été créée</strong>.
+          Recharger le site ne met pas l'icône à jour : Chrome ne la reconstruit que
+          lorsqu'il détecte un changement, ce qui peut prendre plusieurs jours.
+        </p>
+        <ul>
+          <li>Appui long sur l'icône → <strong>Désinstaller</strong>. Ne pas se contenter de réinstaller par-dessus.</li>
+          <li>Fermer tous les onglets Chrome ouverts sur l'application.</li>
+          <li>Rouvrir l'adresse dans Chrome, vérifier que le site s'affiche.</li>
+          <li>Menu de Chrome → <strong>Installer l'application</strong>.</li>
+        </ul>
+        <p className="muted">
+          Pour savoir ce qui a réellement été installé, ouvrez{' '}
+          <code>chrome://webapks</code> dans Chrome sur la tablette. Si « Educatif » n'y figure pas, l'icône n'est qu'un
+          raccourci et non une vraie application — cela arrive quand les services Google sont
+          absents ou restreints. Le raccourci ouvre alors simplement le site dans Chrome, ce
+          qui reste parfaitement utilisable.
+        </p>
+        <p className="muted">
+          Sur les tablettes Huawei, vérifiez aussi Paramètres → Batterie → Lancement des
+          applications : l'application doit y être autorisée à démarrer.
+        </p>
+
         <h2>Verrouiller la tablette pendant une séance</h2>
         <p>
           Le vrai verrou est l'<strong>épinglage d'écran</strong> d'Android : il empêche
