@@ -1,0 +1,123 @@
+/* Ateliers bâtis en DOM. Le Chemin, les Missions et Le Sable dessinent au canvas. */
+
+.stage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap);
+  padding: var(--gap);
+  background: var(--bg);
+}
+
+/* --- choisir parmi N --- */
+
+.choice-grid {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--gap) * 1.5);
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Jamais moins de 88 px : une main de 3 ans vise le milieu, pas les bords. */
+  min-width: var(--target);
+  min-height: var(--target);
+  width: min(30vw, 260px);
+  height: min(38vh, 260px);
+  padding: 16px;
+  border-radius: calc(var(--radius) * 1.4);
+  background: var(--surface);
+  transition: transform var(--t-fast) ease-out;
+}
+
+.choice img,
+.choice svg {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  pointer-events: none;
+}
+
+.choice:active {
+  transform: scale(0.96);
+}
+
+.choice.chosen {
+  /* Seul retour positif : la surface passe à l'accent. Pas d'étoile, pas de
+     son de victoire, pas de score — rien qui vaille d'être collectionné. */
+  background: var(--accent);
+}
+
+/*
+ * Refus : l'option recule et revient. Aucune croix, aucun son grave, aucune
+ * trace qui reste. L'erreur n'est pas un événement.
+ */
+.choice.refused {
+  animation: refuse var(--t-base) ease-out;
+}
+
+@keyframes refuse {
+  0% { transform: scale(1); }
+  40% { transform: scale(0.9) translateY(6px); }
+  100% { transform: scale(1); }
+}
+
+/* L'enfant est en train de parler : anneau calme, sans compte à rebours. */
+.choice.listening {
+  outline: 4px solid var(--accent);
+  outline-offset: 6px;
+}
+
+/* --- consigne visuelle en haut d'un atelier --- */
+
+.prompt-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap);
+  min-height: var(--target);
+}
+
+.prompt-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 26px;
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.prompt-card img {
+  max-height: 22vh;
+  width: auto;
+}
+
+/* Bouton d'écoute : rejouer la consigne. Un seul glyphe, aucun texte. */
+.replay {
+  width: var(--target);
+  height: var(--target);
+  border-radius: 50%;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.replay svg {
+  width: 46%;
+  height: 46%;
+  fill: var(--ink);
+}
+
+.replay:active {
+  transform: scale(0.94);
+}

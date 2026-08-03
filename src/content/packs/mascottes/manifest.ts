@@ -23,6 +23,7 @@ import filou from './images/filou.svg';
 import choum from './images/choum.svg';
 import rosalie from './images/rosalie.svg';
 import phare from './images/phare.svg';
+import caisse from './images/caisse.svg';
 
 export const mascottesPack: UniversePack = {
   id: 'mascottes',
@@ -115,6 +116,11 @@ export const mascottesPack: UniversePack = {
       // Le dé est dessiné directement au canvas plutôt que chargé en image :
       // l'animation de roulement doit pouvoir s'interrompre à la frame près.
       goal: phare,
+    },
+    missions: {
+      // Le véhicule est dessiné au canvas — il doit pouvoir s'allonger selon le
+      // nombre d'alvéoles, ce qu'une image fixe ne permet pas.
+      object: caisse,
     },
   },
 };

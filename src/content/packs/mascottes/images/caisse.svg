@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- L'objet à charger dans le véhicule. Volontairement neutre et identique
+     d'un exemplaire à l'autre : ce qui compte est la quantité, pas l'objet. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <path d="M12 30 L50 12 L88 30 L50 48 Z" fill="#E8C87A"/>
+  <path d="M12 30 L50 48 L50 90 L12 72 Z" fill="#C9A659"/>
+  <path d="M88 30 L50 48 L50 90 L88 72 Z" fill="#B08E44"/>
+  <path d="M12 30 L50 48 L88 30" fill="none" stroke="#8A6E33" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M50 48 L50 90" fill="none" stroke="#8A6E33" stroke-width="3"/>
+</svg>

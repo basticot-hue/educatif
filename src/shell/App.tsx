@@ -9,7 +9,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createChemin } from '../activities/chemin';
+import { activityEntry, AVAILABLE_IDS } from '../activities/registry';
 import { applyPalette, defaultPack, preloadPack } from '../content/pack';
 import { pickMission, type Mission } from '../content/missions';
 import { unlockAudio } from '../engine/audio';
@@ -43,12 +43,17 @@ const SERIES_PER_SESSION = 2;
 
 export function App() {
   const pack = useMemo(() => defaultPack(), []);
-  const activity = useMemo(() => createChemin(), []);
 
   const [stage, setStage] = useState<Stage>('boot');
   const [character, setCharacter] = useState<PackCharacter | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [level, setLevel] = useState(0);
+  /**
+   * Une instance neuve par série. Réutiliser la même d'une série à l'autre
+   * forcerait chaque atelier à remettre lui-même tout son état à zéro, et l'un
+   * d'eux finirait par en oublier une part.
+   */
+  const [activity, setActivity] = useState(() => activityEntry('chemin').create());
   const [mission, setMission] = useState<Mission | null>(null);
   const [seriesDone, setSeriesDone] = useState(0);
 
@@ -95,17 +100,21 @@ export function App() {
 
   /* ---------------- séries ---------------- */
 
-  const startSeries = useCallback(async () => {
-    const built = await buildSeries('counting.sequence', (l) => activity.itemPool(l));
+  const startSeries = useCallback(async (id: ActivityId) => {
+    const entry = activityEntry(id);
+    const instance = entry.create();
+    const built = await buildSeries(entry.drivingSkill, (l) => instance.itemPool(l));
+
+    setActivity(instance);
     setItems(built.items);
     setLevel(built.level);
-    session.current?.noteActivity('chemin');
+    session.current?.noteActivity(id);
     setStage('activity');
-  }, [activity]);
+  }, []);
 
   const onPickActivity = useCallback(
-    (_id: ActivityId) => {
-      void startSeries();
+    (id: ActivityId) => {
+      void startSeries(id);
     },
     [startSeries],
   );
@@ -137,6 +146,9 @@ export function App() {
       setStage('interlude');
     }
   }, [seriesDone, finishMission]);
+
+  /** Après l'interlude, l'enfant retourne choisir : c'est lui qui décide. */
+  const afterInterlude = useCallback(() => setStage('shelf'), []);
 
   /* ---------------- voix de l'enfant ---------------- */
 
@@ -182,7 +194,7 @@ export function App() {
 
       {stage === 'welcome' && <Welcome pack={pack} onPick={(c) => void onPickCharacter(c)} />}
 
-      {stage === 'shelf' && <Shelf available={['chemin']} onPick={onPickActivity} />}
+      {stage === 'shelf' && <Shelf available={AVAILABLE_IDS} onPick={onPickActivity} />}
 
       {stage === 'activity' && character && (
         <ActivityHost
@@ -198,11 +210,7 @@ export function App() {
       )}
 
       {stage === 'interlude' && character && (
-        <Interlude
-          character={character}
-          speak={() => speak('praise')}
-          onDone={() => void startSeries()}
-        />
+        <Interlude character={character} speak={() => speak('praise')} onDone={afterInterlude} />
       )}
 
       {stage === 'mission' && character && (

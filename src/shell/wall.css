@@ -1,0 +1,49 @@
+/* Le mur des trésors. */
+
+.wall-screen {
+  justify-content: flex-start;
+  padding: var(--gap);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.wall {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: var(--gap);
+  width: 100%;
+  align-content: start;
+}
+
+.treasure {
+  aspect-ratio: 1;
+  min-width: var(--target);
+  min-height: var(--target);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  overflow: hidden;
+}
+
+.treasure img,
+.treasure svg {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.treasure:active {
+  transform: scale(0.97);
+}
+
+/*
+ * Une histoire racontée n'a pas d'image : on la distingue par la teinte du
+ * fond, pas par un badge — un badge se collectionne, une teinte non.
+ */
+.treasure[data-kind='histoire'] {
+  background: var(--accent);
+}

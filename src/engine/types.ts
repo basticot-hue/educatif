@@ -228,6 +228,49 @@ export interface ItemSchedule {
  * Journal de séance
  * ------------------------------------------------------------------ */
 
+/**
+ * Un objet photographié et nommé par l'enfant à la Fabrique.
+ *
+ * Il utilise **exactement le même format** qu'un personnage de pack : un seul
+ * chemin de contenu à maintenir, et les objets alimentent donc directement Le
+ * Sac de Chase et Le Château des mots.
+ *
+ * `syllables`, `onset`, `coda`, `rime` et `category` sont saisis par le parent
+ * en quelques taps. On ne cherche pas à les déduire : le français écrit ment
+ * trop sur sa prononciation.
+ */
+export interface ChildObject {
+  id: string;
+  label: string;
+  /** Clé de blob de l'image détourée. */
+  image: string;
+  /** Clé de blob du nom dit par l'enfant. */
+  audioLabel: string | null;
+  syllables: number;
+  /** Un *son*, jamais un nom de lettre. */
+  onset: string;
+  coda: string;
+  rime: string;
+  category: string;
+  createdAt: string;
+  createdBy: 'child' | 'parent';
+  /** Faux tant que le parent n'a pas renseigné la phonologie. */
+  complete: boolean;
+}
+
+/** Ce que l'enfant a produit. Seule progression visible de l'app. */
+export type TreasureKind = 'trace' | 'objet' | 'scene' | 'histoire';
+
+export interface Treasure {
+  id: string;
+  kind: TreasureKind;
+  /** Clé de blob : image PNG de la trace, de la scène, ou de l'objet. */
+  image: string | null;
+  /** Clé de blob : voix de l'enfant. */
+  audio: string | null;
+  createdAt: number;
+}
+
 export interface SessionRecord {
   startedAt: number;
   endedAt: number | null;

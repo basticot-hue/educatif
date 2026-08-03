@@ -8,10 +8,18 @@
  */
 
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
-import type { ItemResult, ItemSchedule, Mastery, SessionRecord, SkillId } from './types';
+import type {
+  ChildObject,
+  ItemResult,
+  ItemSchedule,
+  Mastery,
+  SessionRecord,
+  SkillId,
+  Treasure,
+} from './types';
 
 const DB_NAME = 'educatif';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 interface Schema extends DBSchema {
   mastery: {
@@ -36,6 +44,17 @@ interface Schema extends DBSchema {
     key: string;
     value: { key: string; value: unknown };
   };
+  /** Objets photographiés à la Fabrique. */
+  objects: {
+    key: string;
+    value: ChildObject;
+  };
+  /** Le mur des trésors : uniquement la production de l'enfant. */
+  treasures: {
+    key: string;
+    value: Treasure;
+    indexes: { 'by-date': number };
+  };
 }
 
 let dbPromise: Promise<IDBPDatabase<Schema>> | null = null;
@@ -43,13 +62,23 @@ let dbPromise: Promise<IDBPDatabase<Schema>> | null = null;
 function db() {
   if (!dbPromise) {
     dbPromise = openDB<Schema>(DB_NAME, DB_VERSION, {
-      upgrade(database) {
-        database.createObjectStore('mastery', { keyPath: 'skill' });
-        const items = database.createObjectStore('items', { keyPath: 'itemId' });
-        items.createIndex('by-skill', 'skill');
-        database.createObjectStore('sessions', { keyPath: 'startedAt' });
-        database.createObjectStore('blobs', { keyPath: 'key' });
-        database.createObjectStore('settings', { keyPath: 'key' });
+      // Les migrations sont cumulatives et sans `break` : une tablette restée
+      // en version 1 doit pouvoir passer directement à la dernière sans perdre
+      // la progression ni les enregistrements déjà faits.
+      upgrade(database, oldVersion) {
+        if (oldVersion < 1) {
+          database.createObjectStore('mastery', { keyPath: 'skill' });
+          const items = database.createObjectStore('items', { keyPath: 'itemId' });
+          items.createIndex('by-skill', 'skill');
+          database.createObjectStore('sessions', { keyPath: 'startedAt' });
+          database.createObjectStore('blobs', { keyPath: 'key' });
+          database.createObjectStore('settings', { keyPath: 'key' });
+        }
+        if (oldVersion < 2) {
+          database.createObjectStore('objects', { keyPath: 'id' });
+          const treasures = database.createObjectStore('treasures', { keyPath: 'id' });
+          treasures.createIndex('by-date', 'createdAt');
+        }
       },
     });
   }
@@ -134,12 +163,71 @@ export async function setSetting(key: string, value: unknown): Promise<void> {
   await (await db()).put('settings', { key, value });
 }
 
+/* ---------------- objets de la Fabrique ---------------- */
+
+export async function saveObject(o: ChildObject): Promise<void> {
+  await (await db()).put('objects', o);
+}
+
+export async function allObjects(): Promise<ChildObject[]> {
+  return (await db()).getAll('objects');
+}
+
+/**
+ * Seuls les objets dont le parent a renseigné la phonologie sont utilisables
+ * par Le Sac de Chase : un objet sans attaque connue n'a pas de bon sac.
+ */
+export async function usableObjects(): Promise<ChildObject[]> {
+  return (await allObjects()).filter((o) => o.complete);
+}
+
+export async function deleteObject(id: string): Promise<void> {
+  const database = await db();
+  const object = await database.get('objects', id);
+  if (object) {
+    // Sans cela les blobs associés fuiraient — ce sont de loin les plus gros.
+    await database.delete('blobs', object.image);
+    if (object.audioLabel) await database.delete('blobs', object.audioLabel);
+  }
+  await database.delete('objects', id);
+}
+
+/* ---------------- mur des trésors ---------------- */
+
+export async function addTreasure(t: Treasure): Promise<void> {
+  await (await db()).put('treasures', t);
+}
+
+/** Du plus récent au plus ancien. */
+export async function allTreasures(): Promise<Treasure[]> {
+  const list = await (await db()).getAllFromIndex('treasures', 'by-date');
+  return list.reverse();
+}
+
+export async function deleteTreasure(id: string): Promise<void> {
+  const database = await db();
+  const treasure = await database.get('treasures', id);
+  if (treasure) {
+    if (treasure.image) await database.delete('blobs', treasure.image);
+    if (treasure.audio) await database.delete('blobs', treasure.audio);
+  }
+  await database.delete('treasures', id);
+}
+
 /* ---------------- utilitaires ---------------- */
 
 /** Utilisé par les tests, et par le bouton de remise à zéro de l'espace parent. */
 export async function clearAll(): Promise<void> {
   const database = await db();
-  const stores = ['mastery', 'items', 'sessions', 'blobs', 'settings'] as const;
+  const stores = [
+    'mastery',
+    'items',
+    'sessions',
+    'blobs',
+    'settings',
+    'objects',
+    'treasures',
+  ] as const;
   const tx = database.transaction(stores, 'readwrite');
   await Promise.all(stores.map((s) => tx.objectStore(s).clear()));
   await tx.done;

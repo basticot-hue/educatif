@@ -27,8 +27,26 @@ function CheminIcon() {
   );
 }
 
+/** Un véhicule et ses alvéoles, dont l'une est encore vide. */
+function MissionsIcon() {
+  return (
+    <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect x="18" y="18" width="66" height="42" rx="8" fill="#12212E" opacity="0.1" />
+      <circle cx="38" cy="32" r="6" fill="#12212E" opacity="0.55" />
+      <circle cx="64" cy="46" r="6" fill="#12212E" opacity="0.55" />
+      <rect x="20" y="70" width="150" height="34" rx="9" fill="#E4B429" />
+      <rect x="30" y="78" width="18" height="18" rx="4" fill="#12212E" opacity="0.18" />
+      <rect x="56" y="78" width="18" height="18" rx="4" fill="#12212E" opacity="0.18" />
+      <rect x="82" y="78" width="18" height="18" rx="4" fill="#12212E" opacity="0.4" />
+      <circle cx="46" cy="108" r="9" fill="#12212E" />
+      <circle cx="144" cy="108" r="9" fill="#12212E" />
+    </svg>
+  );
+}
+
 const ICONS: Partial<Record<ActivityId, () => React.ReactElement>> = {
   chemin: CheminIcon,
+  missions: MissionsIcon,
 };
 
 interface Props {
