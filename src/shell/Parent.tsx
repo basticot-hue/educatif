@@ -509,18 +509,18 @@ function TechPanel({
       )}
 
       <div className="status">
-        <span className={`dot ${installed ? 'ok' : 'warn'}`} />
+        <span className={`dot ${installed ? 'ok' : ''}`} />
         <span>
           {installed
-            ? 'Installée sur l’écran d’accueil, en plein écran.'
-            : "Ouverte dans le navigateur. Installez-la : c'est ce qui donne le plein écran, l'icône, et le stockage durable."}
+            ? 'Lancée depuis son icône, sans barre d’adresse.'
+            : "Ouverte dans un onglet de Chrome. C'est parfaitement utilisable — voir plus bas."}
         </span>
 
         <span className={`dot ${storage.persisted ? 'ok' : 'warn'}`} />
         <span>
           {storage.persisted
             ? 'Stockage durable accordé — les données ne seront pas effacées automatiquement.'
-            : 'Stockage non durable : Android pourrait effacer la progression. Installer l’app le règle.'}
+            : 'Stockage non durable : Android pourrait effacer la progression si la tablette manque de place. Utiliser l’application régulièrement suffit généralement à l’éviter.'}
         </span>
 
         <span className="dot" />
@@ -551,12 +551,43 @@ function TechPanel({
         </span>
       </div>
 
-      {installable && !installed && (
-        <div className="btn-row">
-          <button className="btn" onClick={onInstall}>
-            Installer sur l'écran d'accueil
-          </button>
-        </div>
+      {!installed && (
+        <>
+          <h2>Poser l'application sur l'écran d'accueil</h2>
+          <p>
+            Deux façons de faire, et sur tablette elles ne donnent pas le même résultat.
+          </p>
+
+          {installable && (
+            <>
+              <div className="btn-row">
+                <button className="btn" onClick={onInstall}>
+                  Installer comme application
+                </button>
+              </div>
+              <p className="muted">
+                Chrome pose l'icône tout de suite, puis fabrique la vraie application en
+                arrière-plan, en contactant les serveurs Google.{' '}
+                <strong>Si cette fabrication échoue, l'icône reste mais ne lance rien.</strong>{' '}
+                C'est fréquent sur les tablettes dont les services Google sont restreints, et
+                cela ne se voit qu'au moment où l'on tape dessus.
+              </p>
+            </>
+          )}
+
+          <div className="callout">
+            <strong>Si l'icône ne lance rien, ne vous acharnez pas.</strong> Désinstallez-la,
+            puis utilisez le menu de Chrome → <strong>Ajouter à l'écran d'accueil</strong>.
+            Cela crée un simple raccourci, qui ouvre le site dans Chrome — et fonctionne
+            toujours.
+            <br />
+            <br />
+            Vous y perdez seulement la disparition de la barre d'adresse. Les ateliers, la
+            voix, le micro, la progression, le fonctionnement hors ligne : tout marche
+            à l'identique. Et le vrai verrou d'une séance n'a jamais été le mode d'affichage,
+            c'est l'<strong>épinglage d'écran</strong> d'Android, décrit plus bas.
+          </div>
+        </>
       )}
     </>
   );
