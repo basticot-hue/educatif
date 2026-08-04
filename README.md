@@ -1,12 +1,30 @@
-# Educatif — passe 1
+# Educatif
 
 Application d'apprentissage sur tablette pour un enfant de 3 ans et demi. PWA installée,
 hors ligne, plein écran, sans compte ni serveur.
 
-Cette passe livre la **fondation complète** et **un seul atelier** — Le Chemin, sur ses sept
-niveaux. Les six autres viendront en passe 2, après une séance réelle observée : plusieurs
-paramètres (longueur d'une série, appétence pour le glisser-déposer, acceptation de parler à
-voix haute) ne peuvent pas être tranchés autrement.
+Les **sept ateliers** sont là, chacun sur ses sept niveaux :
+
+| Atelier | Travaille | Geste |
+| --- | --- | --- |
+| Le Chemin | compter en avançant sur une piste | glisser le pion case par case |
+| Les Missions | un objet par emplacement, puis combien | glisser une caisse par alvéole |
+| Le Bal des syllabes | rimes, puis découpage en morceaux | frapper dans ses mains, poser la carte |
+| Le Sac de Chase | le son du début, puis celui de la fin | écouter, puis glisser dans le bon sac |
+| Le Sable | conduire un geste, puis tracer des lettres | suivre un sillon du doigt |
+| Le Château des mots | ranger par familles, connaître les mots | écouter, puis glisser dans la bonne salle |
+| Le Récit | tenir une histoire entière en tête | remettre les images dans l'ordre |
+
+S'y ajoute **La Fabrique**, qui n'est pas un atelier : l'enfant y photographie ses propres
+objets, et ils alimentent ensuite les ateliers de sons.
+
+Deux mécaniques partagées portent les ateliers de langage :
+
+- **choisir parmi N** (`activities/common/choice.ts`) — taper une option la choisit ;
+- **écouter puis glisser** (`activities/common/sort.ts`) — taper une carte la **nomme**,
+  glisser répond. C'est le mode par défaut dès qu'il y a des mots en jeu : devant deux images
+  muettes, un enfant qui ne connaît pas le mot ne compare pas des sons, il tape au hasard — et
+  le moteur enregistre ce hasard comme une réussite ou un échec de phonologie.
 
 ## Démarrer
 
@@ -59,8 +77,8 @@ contenu ; un univers est un dossier de fichiers.
 ```
 src/
   engine/       contrat, persistance, maîtrise, planification, séance, audio, voix, plateforme
-  activities/   un dossier par atelier — seul `chemin/` existe en passe 1
-  content/      packs d'univers, missions hors écran
+  activities/   un dossier par atelier, plus `common/` : les mécaniques partagées
+  content/      packs d'univers, missions hors écran, photos substituées aux dessins
   shell/        écrans React : accueil, étagère, interlude, mission, fin, espace parent
 ```
 
@@ -77,6 +95,11 @@ créerait des conflits de cycle de vie. `shell/ActivityHost.tsx` fait le pont.
   dans le dispositif — une trace qui ne s'écrit pas, un véhicule qui ne démarre pas.
 - Chaque atelier comporte un moment où l'enfant **dit** quelque chose à voix haute.
 - Zéro texte hors de l'espace parent. Cibles ≥ 88 px, espacées de ≥ 24 px.
+- **Aucune image muette sur laquelle on demande de décider.** Si la tâche porte sur un mot, ce
+  mot doit avoir été entendu, et pouvoir être réentendu d'un simple contact.
+- **Jamais un nom de lettre.** Un sac se désigne par un mot entier (« comme papillon »), une
+  lettre tracée se conclut par un mot (« lune » pour le L). « cé » à la place de « chhh »
+  devra être désappris.
 - Les transitions d'état passent par des `setTimeout`, jamais par `requestAnimationFrame` :
   celui-ci est suspendu en arrière-plan et laisserait la séance figée.
 
@@ -86,8 +109,16 @@ créerait des conflits de cycle de vie. `shell/ActivityHost.tsx` fait le pont.
   le script n'a pas ouverte, PWA installée comprise. À la place, un écran terminal sans aucune
   cible tactile, dont on ne sort que par l'espace parent. L'intention — jamais de « encore une
   partie ? » — est préservée ; le verrou réel est l'épinglage d'écran.
-- **Relance dans l'heure** : la spécification renvoie vers le Studio, qui n'existe pas en
-  passe 1. On va donc directement à l'écran terminal.
+- **Relance dans l'heure** : la spécification renvoie vers le Studio, qui n'existe pas. On va
+  donc directement à l'écran terminal.
+- **Images des mots** : aucune photographie n'est livrée. Une banque d'images pèserait
+  plusieurs dizaines de mégaoctets à embarquer hors ligne et ne se redistribuerait pas sans
+  conditions. Les mots sont donc dessinés — contour d'encre et ombre au sol, parce qu'à cet âge
+  une image se lit par ses bords — et le parent remplace n'importe lequel par **sa** photo
+  depuis la planche des mots. C'est ce remplacement qui est le vrai correctif, pas le dessin.
+- **Panneaux du Récit** : ils se composent d'un personnage et d'un objet du pack plutôt que
+  d'être illustrés un à un. Une illustration par panneau demanderait un dessinateur à chaque
+  histoire ajoutée, alors qu'un pack doit pouvoir s'écrire en quelques lignes.
 - **Ordre de révision** : la spécification écrit « par ordre de dette croissante ». Pris à la
   lettre, cela reverrait en priorité l'item vu il y a cinq minutes et jamais celui vu il y a
   seize jours, ce qui annule la répétition espacée. `scheduler.ts` trie donc par dette

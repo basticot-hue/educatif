@@ -108,8 +108,97 @@ export const mascottesPack: UniversePack = {
     },
   ],
 
-  // Le Récit est un atelier de la passe 2 ; le pack n'a pas encore d'histoires.
-  stories: [],
+  /*
+   * Les histoires du Récit.
+   *
+   * Chaque panneau montre **un objet différent** du pack : c'est la seule chose
+   * qui permette de les distinguer une fois mélangés, et donc de les remettre
+   * dans l'ordre. Deux panneaux montrant la même chose rendraient la tâche
+   * insoluble sans avoir retenu les phrases mot à mot, ce qui n'est pas ce
+   * qu'on travaille.
+   *
+   * Les phrases sont courtes, au présent, avec un seul événement chacune, et
+   * l'ordre est **causal ou chronologique évident** — se réveiller vient avant
+   * s'endormir. À trois ans et demi, l'enfant reconstruit une chronologie qu'il
+   * a vécue ; il ne déduit pas encore d'un enchaînement abstrait.
+   */
+  stories: [
+    {
+      id: 'journee',
+      title: 'La journée de Mila',
+      characterId: 'mila',
+      panels: [
+        { id: 'reveil', wordId: 'lit', text: 'Le matin, Mila se réveille dans son lit.' },
+        { id: 'repas', wordId: 'banane', text: 'Mila mange une banane.' },
+        { id: 'sortie', wordId: 'velo', text: 'Mila part se promener à vélo.' },
+        { id: 'nuit', wordId: 'lune', text: 'La lune se lève, et Mila s’endort.' },
+      ],
+      questions: [
+        {
+          id: 'mange',
+          prompt: 'Qu’est-ce que Mila a mangé ?',
+          options: ['banane', 'tomate', 'fraise'],
+          answer: 'banane',
+        },
+        {
+          id: 'promenade',
+          prompt: 'Avec quoi Mila s’est-elle promenée ?',
+          options: ['velo', 'bateau', 'moto'],
+          answer: 'velo',
+        },
+      ],
+    },
+    {
+      id: 'pluie',
+      title: 'Filou sous la pluie',
+      characterId: 'filou',
+      panels: [
+        { id: 'soleil', wordId: 'soleil', text: 'Filou joue dehors, il y a du soleil.' },
+        { id: 'nuage', wordId: 'nuage', text: 'Un gros nuage arrive.' },
+        { id: 'pluie', wordId: 'parapluie', text: 'Filou ouvre vite son parapluie.' },
+        { id: 'retour', wordId: 'maison', text: 'Filou rentre à la maison, tout sec.' },
+      ],
+      questions: [
+        {
+          id: 'ouvre',
+          prompt: 'Qu’est-ce que Filou a ouvert quand il a plu ?',
+          options: ['parapluie', 'chapeau', 'valise'],
+          answer: 'parapluie',
+        },
+        {
+          id: 'avant',
+          prompt: 'Qu’est-ce qu’il y avait dans le ciel au début ?',
+          options: ['soleil', 'lune', 'nuage'],
+          answer: 'soleil',
+        },
+      ],
+    },
+    {
+      id: 'mer',
+      title: 'Choum et le dauphin',
+      characterId: 'choum',
+      panels: [
+        { id: 'chapeau', wordId: 'chapeau', text: 'Choum met son chapeau.' },
+        { id: 'bateau', wordId: 'bateau', text: 'Choum monte dans le bateau.' },
+        { id: 'dauphin', wordId: 'dauphin', text: 'Un dauphin saute tout près du bateau !' },
+        { id: 'lit', wordId: 'lit', text: 'Le soir, Choum se couche dans son lit.' },
+      ],
+      questions: [
+        {
+          id: 'saute',
+          prompt: 'Qui a sauté à côté du bateau ?',
+          options: ['dauphin', 'tortue', 'canard'],
+          answer: 'dauphin',
+        },
+        {
+          id: 'tete',
+          prompt: 'Qu’est-ce que Choum a mis sur sa tête ?',
+          options: ['chapeau', 'jupe', 'nid'],
+          answer: 'chapeau',
+        },
+      ],
+    },
+  ],
 
   activityAssets: {
     chemin: {

@@ -1,0 +1,16 @@
+/*
+ * Le Château.
+ *
+ * Un mur de pierre très discret derrière la scène. Il ne bouge pas, ne clignote
+ * pas, ne raconte rien : il existe uniquement pour que Le Château et Le Sac de
+ * Chase — mêmes gestes, mêmes cartes — ne se confondent pas au premier coup
+ * d'œil. Tout le reste passe par ce qu'on entend.
+ */
+
+.stage.chateau {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 2px, transparent 2px);
+  background-size: 96px 54px;
+  background-position: 0 0;
+}

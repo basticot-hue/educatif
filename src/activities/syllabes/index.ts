@@ -16,7 +16,9 @@ import { tick } from '../../engine/audio';
 import type { Activity, ActivityProps, Item, ItemResult } from '../../engine/types';
 import { openMicStream } from '../../engine/voice';
 import { wordById, type WordCard } from '../../content/packs/mascottes/words';
+import { wordImage } from '../../content/wordImages';
 import { ChoiceRunner, type ChoiceRound } from '../common/choice';
+import { SortRunner, type SortRound } from '../common/sort';
 import { el, shuffle, wait } from '../common/stage';
 import '../common/activity.css';
 import './syllabes.css';
@@ -43,6 +45,7 @@ class SyllabesActivity implements Activity {
   private config!: LevelConfig;
   private root!: HTMLElement;
   private runner: ChoiceRunner | null = null;
+  private sorter: SortRunner | null = null;
 
   private queue: Item[] = [];
   private consumed = 0;
@@ -99,6 +102,7 @@ class SyllabesActivity implements Activity {
     this.listener?.stop();
     this.listener = null;
     this.runner?.dispose();
+    this.sorter?.dispose();
     this.timers.forEach(clearTimeout);
     this.timers.clear();
     // Le flux est relâché ici : le garder ouvert laisserait le voyant micro
@@ -143,6 +147,7 @@ class SyllabesActivity implements Activity {
     }
 
     if (this.config.mode === 'frapper') await this.runClapRound(item, word);
+    else if (this.config.mode === 'rime') await this.runRhymeRound(item, word);
     else await this.runChoiceRound(item, word);
   }
 
@@ -183,7 +188,7 @@ class SyllabesActivity implements Activity {
 
     const card = el('div', 'bal-card', scene);
     const image = el('img', undefined, card);
-    image.src = word.image;
+    image.src = wordImage(word);
     image.alt = '';
 
     const holder = el('div', 'bal-mascot-holder', scene);
@@ -315,7 +320,79 @@ class SyllabesActivity implements Activity {
     }
   }
 
-  /* ---------------- niveaux 0, 4, 5, 6 : choisir ---------------- */
+  /* ---------------- niveau 0 : les rimes ---------------- */
+
+  /**
+   * Le mot modèle est la **cible**, au-dessus ; les deux propositions sont des
+   * cartes qu'on glisse dessus.
+   *
+   * Une version antérieure présentait trois images muettes et demandait de
+   * taper. Deux choses la rendaient impraticable : le pack contient des mots
+   * qu'un enfant de trois ans et demi ne connaît pas (« nid », « jupe »), et
+   * rien ne les faisait entendre. Comparer deux fins de mots qu'on n'a jamais
+   * entendus n'est pas un exercice de phonologie, c'est un tirage au sort — que
+   * le moteur enregistrait ensuite comme une réussite ou un échec de rime.
+   *
+   * Désormais : le modèle est prononcé, puis chaque proposition se nomme en se
+   * soulevant, et n'importe quelle carte se redit d'un simple contact. On ne
+   * répond qu'en glissant.
+   */
+  private async runRhymeRound(item: Item, word: WordCard): Promise<void> {
+    const pair = rhymePair(word, Math.random);
+    if (!pair) {
+      this.consumed += 1;
+      return this.next();
+    }
+
+    this.root.textContent = '';
+    const host = el('div', undefined, this.root);
+    host.style.cssText = 'width:100%;height:100%';
+
+    const round: SortRound = {
+      itemId: item.id,
+      skill: skillForLevel(this.props.level),
+      bins: [
+        {
+          id: word.id,
+          image: wordImage(word),
+          label: word.label,
+          sound: `mot.${word.id}`,
+          accepts: [pair.match.id],
+        },
+      ],
+      cards: shuffle([
+        { id: pair.match.id, image: wordImage(pair.match), label: pair.match.label, sound: `mot.${pair.match.id}` },
+        { id: pair.odd.id, image: wordImage(pair.odd), label: pair.odd.label, sound: `mot.${pair.odd.id}` },
+      ]),
+      // L'intrus ne se range nulle part : il reste posé, sans que rien ne le
+      // sanctionne, et le tour se referme dès que la bonne carte est placée.
+      extras: [pair.odd.id],
+      prompt: async () => {
+        await this.props.speak('syllabes.rime');
+        await this.props.speak(`mot.${word.id}`);
+      },
+      contrast: async () => {
+        // On fait entendre les deux fins côte à côte plutôt que de dire non.
+        await this.props.speak(`mot.${word.id}`);
+        await wait(200);
+        await this.props.speak(`mot.${pair.match.id}`);
+      },
+    };
+
+    this.sorter = new SortRunner(host, {
+      speak: (key) => this.props.speak(key),
+      recordVoice: (id) => this.props.recordVoice(id),
+      onItemResult: (result) => {
+        this.consumed += 1;
+        this.props.onItemResult(result);
+        if (!this.disposed) void this.next();
+      },
+    });
+
+    await this.sorter.run([round]);
+  }
+
+  /* ---------------- niveaux 4, 5, 6 : choisir ---------------- */
 
   private async runChoiceRound(item: Item, word: WordCard): Promise<void> {
     const round = this.buildChoiceRound(item, word);
@@ -326,9 +403,19 @@ class SyllabesActivity implements Activity {
 
     this.root.textContent = '';
     const header = el('div', 'prompt-row', this.root);
-    const card = el('div', 'prompt-card', header);
+    /*
+     * La carte du mot est un bouton : la toucher rejoue le mot découpé.
+     *
+     * Ces niveaux demandent de repérer un morceau *dans* un mot. Sans moyen de
+     * réentendre le mot, un enfant qui a laissé passer la consigne n'a plus
+     * qu'à deviner — et les niveaux hauts sont justement ceux où deviner ne
+     * marche plus.
+     */
+    const card = el('button', 'prompt-card', header);
+    card.setAttribute('aria-label', word.label);
+    card.addEventListener('click', () => void this.speakSplit(word));
     const image = el('img', undefined, card);
-    image.src = word.image;
+    image.src = wordImage(word);
     image.alt = '';
 
     const options = el('div', undefined, this.root);
@@ -348,32 +435,6 @@ class SyllabesActivity implements Activity {
 
   private buildChoiceRound(item: Item, word: WordCard): ChoiceRound | null {
     const skill = skillForLevel(this.props.level);
-
-    if (this.config.mode === 'rime') {
-      const pair = rhymePair(word, Math.random);
-      if (!pair) return null;
-      return {
-        itemId: item.id,
-        skill,
-        columns: 2,
-        speaks: false,
-        correctId: pair.match.id,
-        options: shuffle([
-          { id: pair.match.id, image: pair.match.image, label: pair.match.label },
-          { id: pair.odd.id, image: pair.odd.image, label: pair.odd.label },
-        ]),
-        prompt: async () => {
-          await this.props.speak('syllabes.rime');
-          await this.props.speak(`mot.${word.id}`);
-        },
-        contrast: async () => {
-          // On fait entendre les deux fins côte à côte plutôt que de dire non.
-          await this.props.speak(`mot.${word.id}`);
-          await wait(200);
-          await this.props.speak(`mot.${pair.match.id}`);
-        },
-      };
-    }
 
     // Niveaux 4 à 6 : la réponse est une **position de syllabe**, pas un mot.
     const positions = word.split.map((part, i) => ({

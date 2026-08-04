@@ -95,11 +95,11 @@ export function ActivityDocs({ onClose }: { onClose: () => void }) {
           );
         })}
 
-        <h2>Les ateliers à venir</h2>
+        <h2>La Fabrique</h2>
         <p className="muted">
-          Le Bal des syllabes, Le Sac de Chase, Le Sable, Le Château des mots, Le Récit, la
-          Fabrique et le Studio ne sont pas encore construits. Ils apparaîtront sur l'étagère
-          au fur et à mesure.
+          Ce n'est pas un atelier : l'enfant n'y est pas évalué et n'y monte aucun niveau. Il y
+          photographie ses propres objets et dit leur nom. Complétez-en la phonologie dans
+          « Les objets de l'enfant » — sans elle, Le Sac de Chase ne peut pas s'en servir.
         </p>
 
         <div className="btn-row">

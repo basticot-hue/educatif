@@ -1,0 +1,156 @@
+/* « Écouter, puis glisser » — voir sort.ts. */
+
+.sort {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--gap) * 1.5);
+  width: 100%;
+  height: 100%;
+}
+
+.sort-bins,
+.sort-cards {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: calc(var(--gap) * 1.5);
+  flex-wrap: wrap;
+}
+
+/* --- la cible --- */
+
+.bin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* La cible doit rester large : c'est elle qu'on vise en glissant, et un doigt
+     de trois ans arrive rarement au centre. */
+  min-width: calc(var(--target) * 1.6);
+  border-radius: calc(var(--radius) * 1.4);
+  padding: 8px;
+  transition: background var(--t-fast) ease-out;
+}
+
+/* Le doigt survole la cible : elle s'éclaire, sans bouger d'un pixel. */
+.bin.hovered {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.bin-face {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--target);
+  min-height: var(--target);
+  width: min(30vw, 240px);
+  height: min(30vh, 240px);
+  padding: 14px;
+  border-radius: calc(var(--radius) * 1.4);
+  background: var(--surface);
+}
+
+.bin-face img,
+.bin-face svg {
+  max-width: 100%;
+  max-height: 100%;
+  pointer-events: none;
+}
+
+.bin-face:active {
+  transform: scale(0.97);
+}
+
+/*
+ * Emplacement d'accueil : vide, il ne montre rien. Une case en pointillés
+ * ressemblerait à un trou à combler et deviendrait la consigne, alors que la
+ * consigne est le son.
+ */
+.bin-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 12px;
+  margin-top: 8px;
+}
+
+.bin-slot .card {
+  width: min(14vw, 110px);
+  height: min(14vh, 110px);
+  padding: 8px;
+}
+
+/* --- les cartes --- */
+
+.card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--target);
+  min-height: var(--target);
+  width: min(26vw, 210px);
+  height: min(26vh, 210px);
+  padding: 14px;
+  border-radius: calc(var(--radius) * 1.4);
+  background: var(--surface);
+  touch-action: none;
+  transition: transform var(--t-fast) ease-out;
+}
+
+.card img,
+.card svg {
+  max-width: 100%;
+  max-height: 100%;
+  pointer-events: none;
+}
+
+/* La carte se nomme : elle se soulève le temps qu'on l'entende. C'est le seul
+   lien entre le mot prononcé et l'image, pour un enfant qui ne lit pas. */
+.card.naming {
+  transform: translateY(-10px);
+  outline: 4px solid var(--accent);
+  outline-offset: 6px;
+}
+
+/* Une cible se nomme comme une carte : c'est le seul moyen de savoir ce qu'elle
+   contient, puisqu'elle ne porte pas d'étiquette. */
+.bin.naming .bin-face {
+  outline: 4px solid var(--accent);
+  outline-offset: 6px;
+}
+
+.card.dragging {
+  /* Aucune transition pendant le glissement : la carte doit coller au doigt. */
+  transition: none;
+  z-index: 5;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.32);
+}
+
+.card.placed {
+  pointer-events: none;
+}
+
+/* La place laissée par une carte rangée. Vide, invisible, et immobile : elle
+   n'existe que pour que les cartes restantes ne bougent pas. */
+.card-gap {
+  flex: none;
+  pointer-events: none;
+}
+
+/* Refus : la carte recule et revient. Aucune croix, aucun son grave. */
+.card.refused {
+  animation: card-refuse var(--t-base) ease-out;
+}
+
+@keyframes card-refuse {
+  0% { transform: scale(1); }
+  40% { transform: scale(0.9) translateY(6px); }
+  100% { transform: scale(1); }
+}
+
+.card.listening {
+  outline: 4px solid var(--accent);
+  outline-offset: 6px;
+}

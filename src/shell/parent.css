@@ -10,6 +10,19 @@
   padding: 24px;
   font-size: 15px;
   line-height: 1.55;
+
+  /*
+   * L'application déclare `color-scheme: dark` dans son entête — c'est ce qui
+   * donne les bonnes barres système derrière un fond bleu nuit. Mais un champ de
+   * saisie n'hérite pas de `color` : il prend celle de son thème, donc **blanc**
+   * en sombre, sur le fond blanc imposé plus bas. Le parent tapait dans du vide.
+   *
+   * L'espace parent est le seul écran clair de l'app : il rétablit donc le thème
+   * clair pour lui et ses descendants, et chaque champ redit sa couleur d'encre
+   * — les deux, parce que le premier corrige la cause et le second garantit le
+   * résultat même si Chrome force le thème sombre de la page.
+   */
+  color-scheme: light;
 }
 
 .parent-inner {
@@ -143,6 +156,9 @@
   gap: 16px;
   background: #f6f7f9;
   color: #12212e;
+
+  /* La porte s'affiche avant l'espace parent : même raison qu'au-dessus. */
+  color-scheme: light;
 }
 
 .gate input {
@@ -153,6 +169,8 @@
   border: 1px solid #b9c2cc;
   border-radius: 12px;
   background: #fff;
+  color: #12212e;
+  caret-color: #12212e;
 }
 
 /* Champs de saisie de l'éditeur de personnages. */
@@ -165,6 +183,25 @@
   border: 1px solid #b9c2cc;
   border-radius: 10px;
   background: #fff;
+  color: #12212e;
+  caret-color: #12212e;
+}
+
+/*
+ * Filet pour tout champ qui oublierait sa classe. Un champ illisible ne se voit
+ * pas à la relecture du code — seulement sur la tablette, en tapant à l'aveugle.
+ */
+.parent input,
+.parent textarea,
+.parent select {
+  color: #12212e;
+  caret-color: #12212e;
+}
+
+.parent input::placeholder,
+.parent textarea::placeholder {
+  color: #8b97a3;
+  opacity: 1;
 }
 
 /* Choix du son d'attaque : continues d'abord, occlusives ensuite. */

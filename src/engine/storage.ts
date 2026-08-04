@@ -222,6 +222,17 @@ export async function blobKeys(prefix = ''): Promise<string[]> {
 
 /* ---------------- réglages ---------------- */
 
+/**
+ * Ateliers **retirés** de l'étagère par le parent.
+ *
+ * On enregistre ce qui est retiré, et non ce qui est gardé. La différence n'est
+ * pas cosmétique : un atelier ajouté plus tard apparaît alors de lui-même, au
+ * lieu d'être absent parce qu'il ne figurait pas dans une liste écrite avant
+ * qu'il existe. C'est exactement ce qui serait arrivé à la clé précédente,
+ * `activities.enabled`, qui ne contenait que `chemin` — elle est abandonnée.
+ */
+export const HIDDEN_ACTIVITIES = 'activities.hidden';
+
 export async function getSetting<T>(key: string, fallback: T): Promise<T> {
   const row = await withDb((d) => d.get('settings', key), undefined);
   return row === undefined ? fallback : (row.value as T);

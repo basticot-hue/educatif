@@ -176,6 +176,23 @@ export function createSpeaker(pack: UniversePack, character: PackCharacter): Spe
       const word = WORDS.find((w) => w.id === key.slice(4));
       return word?.label ?? null;
     }
+
+    /*
+     * Le Récit : `recit.<histoire>.<panneau>` dit la phrase du panneau,
+     * `recit.<histoire>.q.<question>` pose la question.
+     *
+     * Le texte vit dans le pack, pas ici : une histoire ajoutée à un pack
+     * importé se raconte sans qu'on touche au moteur.
+     */
+    if (key.startsWith('recit.')) {
+      const parts = key.split('.');
+      const story = pack.stories.find((s) => s.id === parts[1]);
+      if (!story) return null;
+      if (parts[2] === 'q') {
+        return story.questions.find((q) => q.id === parts[3])?.prompt ?? null;
+      }
+      return story.panels.find((p) => p.id === parts[2])?.text ?? null;
+    }
     switch (key) {
       case 'greet':
         return character.lines?.greet ?? `Bonjour, c'est ${character.name} !`;

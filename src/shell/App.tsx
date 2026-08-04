@@ -12,12 +12,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { activityEntry, AVAILABLE_IDS } from '../activities/registry';
 import { applyPalette, defaultPack, preloadPack } from '../content/pack';
 import { applyOverrides, releaseOverrideUrls } from '../content/overrides';
+import { loadWordImages } from '../content/wordImages';
 import { pickMission, type Mission } from '../content/missions';
 import { unlockAudio } from '../engine/audio';
 import { enterImmersive, keepAwake, requestPersistentStorage } from '../engine/platform';
 import { Session, buildSeries, recentlyFinished } from '../engine/session';
 import { createSpeaker, type Speaker } from '../engine/speech';
-import { lastSession } from '../engine/storage';
+import { getSetting, lastSession, HIDDEN_ACTIVITIES } from '../engine/storage';
 import type {
   ActivityId,
   Item,
@@ -72,6 +73,8 @@ export function App() {
    */
   const [activity, setActivity] = useState(() => activityEntry('chemin').create());
   const [mission, setMission] = useState<Mission | null>(null);
+  /** Ateliers présentés sur l'étagère, dans l'ordre du registre. */
+  const [shelf, setShelf] = useState<ActivityId[]>(() => [...AVAILABLE_IDS]);
   const [seriesDone, setSeriesDone] = useState(0);
 
   const session = useRef<Session | null>(null);
@@ -110,6 +113,15 @@ export function App() {
         // Personnages et images du parent indisponibles : on garde le pack embarqué.
       }
 
+      try {
+        // Les photos substituées aux dessins des mots. Chargées ici parce que
+        // les ateliers lisent l'image d'un mot de façon synchrone, au milieu
+        // d'un tour : la chercher à ce moment-là la ferait arriver en retard.
+        await loadWordImages();
+      } catch {
+        // Les dessins embarqués font l'affaire.
+      }
+
       applyPalette(resolved);
       try {
         await preloadPack(resolved);
@@ -127,6 +139,24 @@ export function App() {
        */
       if (!speaker.current) {
         speaker.current = createSpeaker(resolved, resolved.characters[0]);
+      }
+
+      /*
+       * Ateliers retirés par le parent.
+       *
+       * Rien n'est jamais verrouillé *pour l'enfant* — il n'y a ni cadenas ni
+       * ordre imposé. Mais le parent doit pouvoir retirer de l'étagère un
+       * atelier qui ne prend pas, ou alléger le choix : huit tuiles d'un coup,
+       * c'est beaucoup à trois ans et demi. Un atelier retiré disparaît
+       * simplement ; l'enfant ne voit pas qu'il manque quelque chose.
+       */
+      try {
+        const hidden = await getSetting<string[]>(HIDDEN_ACTIVITIES, []);
+        const kept = AVAILABLE_IDS.filter((id) => !hidden.includes(id));
+        // Tout retirer laisserait une étagère vide, donc une séance injouable.
+        setShelf(kept.length > 0 ? kept : [...AVAILABLE_IDS]);
+      } catch {
+        setShelf([...AVAILABLE_IDS]);
       }
 
       setPackReady(true);
@@ -282,9 +312,7 @@ export function App() {
 
       {stage === 'welcome' && <Welcome pack={pack} onPick={(c) => void onPickCharacter(c)} />}
 
-      {stage === 'shelf' && (
-        <Shelf available={[...AVAILABLE_IDS, 'fabrique']} onPick={onPickActivity} />
-      )}
+      {stage === 'shelf' && <Shelf available={[...shelf, 'fabrique']} onPick={onPickActivity} />}
 
       {stage === 'fabrique' && <Fabrique onDone={() => setStage('shelf')} />}
 

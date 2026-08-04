@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { buildLabel } from '../build-info';
 import { missionById } from '../content/missions';
-import { PROMPTS, PROMPT_KEYS } from '../content/prompts';
+import { PROMPTS, PROMPT_KEYS, docFor } from '../content/prompts';
 import { isInstalled, canInstall, promptInstall, storageInfo } from '../engine/platform';
 import { NUMBER_KEYS, hasFrenchVoice, numberWord, parentVoiceKey } from '../engine/speech';
 import {
@@ -17,13 +17,14 @@ import {
   clearAll,
   deleteBlob,
   getSetting,
+  HIDDEN_ACTIVITIES,
   lastSession,
   putBlob,
   setSetting,
   storageUnavailable,
 } from '../engine/storage';
 import type { Speaker } from '../engine/speech';
-import type { SessionRecord, UniversePack } from '../engine/types';
+import { ACTIVITY_IDS, type SessionRecord, type UniversePack } from '../engine/types';
 import { micStatus, startRecording, type Recording } from '../engine/voice';
 import { ActivityDocs } from './ActivityDocs';
 import { Characters } from './Characters';
@@ -57,7 +58,11 @@ export function Parent(props: Props) {
 
   if (!open) return <Gate onPass={() => setOpen(true)} onCancel={props.onClose} />;
   if (panel === 'probe') return <TouchProbe onClose={() => setPanel('main')} />;
-  if (panel === 'words') return <WordSheet onClose={() => setPanel('main')} />;
+  if (panel === 'words') {
+    // Une photo substituée change ce que les ateliers affichent : le pack est
+    // rechargé comme pour un personnage remplacé.
+    return <WordSheet onClose={() => setPanel('main')} onChanged={props.onPackChanged} />;
+  }
   if (panel === 'docs') return <ActivityDocs onClose={() => setPanel('main')} />;
   if (panel === 'objects') {
     return <Objects speaker={props.speaker} onClose={() => setPanel('main')} />;
@@ -82,6 +87,7 @@ export function Parent(props: Props) {
       onDocs={() => setPanel('docs')}
       onCharacters={() => setPanel('characters')}
       onObjects={() => setPanel('objects')}
+      onActivitiesChanged={props.onPackChanged}
     />
   );
 }
@@ -124,12 +130,14 @@ function ParentPanels({
   onDocs,
   onCharacters,
   onObjects,
+  onActivitiesChanged,
 }: Props & {
   onProbe: () => void;
   onWords: () => void;
   onDocs: () => void;
   onCharacters: () => void;
   onObjects: () => void;
+  onActivitiesChanged: () => void;
 }) {
   const [session, setSession] = useState<SessionRecord | null>(null);
   const [recorded, setRecorded] = useState<Set<string>>(new Set());
@@ -137,14 +145,15 @@ function ParentPanels({
   const [storage, setStorage] = useState({ persisted: false, usageBytes: 0, quotaBytes: 0 });
   const [frenchVoice, setFrenchVoice] = useState<boolean | null>(null);
   const [installable, setInstallable] = useState(canInstall());
-  const [enabled, setEnabled] = useState<string[]>(['chemin']);
+  /* On mémorise ce qui est **retiré** : voir `HIDDEN_ACTIVITIES` dans storage.ts. */
+  const [hidden, setHidden] = useState<string[]>([]);
 
   const refresh = useCallback(async () => {
     setSession(await lastSession());
     setRecorded(new Set(await blobKeys('voice.')));
     setStorage(await storageInfo());
     setFrenchVoice(await hasFrenchVoice());
-    setEnabled(await getSetting<string[]>('activities.enabled', ['chemin']));
+    setHidden(await getSetting<string[]>(HIDDEN_ACTIVITIES, []));
   }, []);
 
   useEffect(() => {
@@ -184,21 +193,33 @@ function ParentPanels({
 
         <h2>Ateliers</h2>
         <p className="muted">
-          Les six autres ateliers arrivent en passe 2. Aucun n'est jamais verrouillé
-          pour l'enfant : cette liste sert uniquement à en retirer un si besoin.
+          Aucun atelier n'est jamais verrouillé pour l'enfant : il n'y a ni cadenas, ni ordre
+          imposé, ni niveau affiché. Cette liste sert uniquement à en <strong>retirer</strong>
+          {' '}un de l'étagère — parce qu'il ne prend pas, ou pour alléger le choix.
         </p>
-        <label style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 8 }}>
-          <input
-            type="checkbox"
-            checked={enabled.includes('chemin')}
-            onChange={async (e) => {
-              const next = e.target.checked ? ['chemin'] : [];
-              setEnabled(next);
-              await setSetting('activities.enabled', next);
-            }}
-          />
-          Le Chemin
-        </label>
+        {ACTIVITY_IDS.map((id) => (
+          <label key={id} style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 8 }}>
+            <input
+              type="checkbox"
+              checked={!hidden.includes(id)}
+              onChange={async (e) => {
+                const next = e.target.checked
+                  ? hidden.filter((a) => a !== id)
+                  : [...hidden, id];
+                setHidden(next);
+                await setSetting(HIDDEN_ACTIVITIES, next);
+                onActivitiesChanged();
+              }}
+            />
+            {docFor(id)?.name ?? id}
+          </label>
+        ))}
+        {hidden.length >= ACTIVITY_IDS.length && (
+          <p className="muted">
+            Tout est retiré : l'étagère n'aurait plus rien à montrer. Les ateliers restent donc
+            tous en place tant qu'il n'en subsiste aucun.
+          </p>
+        )}
 
         <TechPanel
           storage={storage}

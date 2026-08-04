@@ -220,6 +220,22 @@ export function suggestSplit(name: string): string[] {
  * Le reste de l'application ne voit qu'un `UniversePack` ordinaire : aucun
  * atelier ne sait qu'un personnage vient du pack embarqué ou du parent.
  */
+/**
+ * Personnage sans photo : une silhouette, jamais rien.
+ *
+ * Un personnage créé sans image recevait la chaîne vide, et `<img src="">`
+ * n'est pas neutre : le navigateur retélécharge la page entière, et l'accueil
+ * proposait une tuile invisible que l'enfant ne pouvait pas viser. Une
+ * silhouette dit « ce héros existe, il n'a pas encore de visage » — le parent
+ * ajoute la photo quand il veut.
+ */
+export const SILHOUETTE = `data:image/svg+xml,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">` +
+    `<circle cx="60" cy="42" r="24" fill="#B9C2CC"/>` +
+    `<path d="M18 116 Q18 74 60 74 Q102 74 102 116 Z" fill="#B9C2CC"/>` +
+    `</svg>`,
+)}`;
+
 export async function mergeCharacters(
   pack: UniversePack,
   trackUrl: (url: string) => void,
@@ -233,7 +249,7 @@ export async function mergeCharacters(
   for (const c of custom) {
     if (hidden.has(c.id)) continue;
 
-    let image = '';
+    let image = SILHOUETTE;
     if (c.imageKey) {
       const blob = await getBlob(c.imageKey);
       if (blob) {

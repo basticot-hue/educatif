@@ -7,9 +7,16 @@
  */
 
 import type { Activity, ActivityId, SkillId } from '../engine/types';
+import { createChateau } from './chateau';
+import { skillForLevel as chateauSkill } from './chateau/levels';
 import { createChemin } from './chemin';
 import { createMissions } from './missions';
 import { skillForLevel as missionsSkill } from './missions/levels';
+import { createRecit } from './recit';
+import { createSable } from './sable';
+import { skillForLevel as sableSkill } from './sable/levels';
+import { createSons } from './sons';
+import { skillForLevel as sonsSkill } from './sons/levels';
 import { createSyllabes } from './syllabes';
 import { skillForLevel as syllabesSkill } from './syllabes/levels';
 
@@ -50,6 +57,33 @@ export const ACTIVITIES: ActivityEntry[] = [
     // qui couvre six des sept niveaux.
     drivingSkill: 'phono.syllable',
     skillAt: syllabesSkill,
+  },
+  {
+    id: 'sons',
+    create: createSons,
+    // L'attaque pilote le niveau : elle couvre cinq des sept niveaux. La fin de
+    // mot et la fusion sont journalisées sous leur propre compétence.
+    drivingSkill: 'phono.onset',
+    skillAt: sonsSkill,
+  },
+  {
+    id: 'sable',
+    create: createSable,
+    // Le prégraphisme pilote : on ne trace pas une lettre avant de savoir
+    // produire les gestes qui la composent.
+    drivingSkill: 'letter.pregraphism',
+    skillAt: sableSkill,
+  },
+  {
+    id: 'chateau',
+    create: createChateau,
+    drivingSkill: 'lang.category',
+    skillAt: chateauSkill,
+  },
+  {
+    id: 'recit',
+    create: createRecit,
+    drivingSkill: 'lang.narrative',
   },
 ];
 

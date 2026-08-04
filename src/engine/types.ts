@@ -134,15 +134,43 @@ export interface PackCharacter {
   roles: Array<'pion' | 'guide' | 'sac'>;
 }
 
+/**
+ * Un panneau d'histoire.
+ *
+ * Il ne porte **pas** d'illustration propre : il se compose du personnage et
+ * d'un objet du pack. C'est délibéré. Une illustration par panneau demanderait
+ * un dessinateur pour chaque histoire ajoutée, alors qu'un pack doit pouvoir
+ * s'écrire en quelques lignes — et l'enfant reconnaît d'autant mieux les objets
+ * qu'il les a déjà rencontrés dans les autres ateliers.
+ *
+ * Deux panneaux d'une même histoire ne montrent jamais le même objet : c'est ce
+ * qui permet de les distinguer, et donc de les remettre dans l'ordre.
+ */
+export interface StoryPanel {
+  id: string;
+  /** Objet montré : identifiant d'un mot du pack. */
+  wordId: string;
+  /** Ce que dit ce panneau. Prononcé, jamais écrit — l'enfant ne lit pas. */
+  text: string;
+}
+
+export interface StoryQuestion {
+  id: string;
+  /** Question posée après l'histoire, à voix haute. */
+  prompt: string;
+  /** Réponses proposées : des mots du pack, montrés en images. */
+  options: string[];
+  answer: string;
+}
+
 export interface PackStory {
   id: string;
   title: string;
-  panels: string[];
+  /** Personnage qui vit l'histoire. */
+  characterId: string;
+  panels: StoryPanel[];
   audio?: string;
-  questions: Array<
-    | { type: 'order'; solution: string[] }
-    | { type: 'inference'; prompt: string; answers: string[] }
-  >;
+  questions: StoryQuestion[];
 }
 
 /**

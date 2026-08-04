@@ -128,6 +128,129 @@ export const ACTIVITY_DOCS: ActivityDoc[] = [
       'syllabes.inverser': 'Montre le deuxième morceau du mot.',
     },
   },
+  {
+    id: 'sons',
+    name: 'Le Sac de Chase',
+    goal: 'Entendre par quel son un mot commence, puis par lequel il finit.',
+    childDoes:
+      'Il touche les sacs pour les entendre, touche les objets pour les entendre, ' +
+      'puis glisse chaque objet dans le sac dont le mot commence pareil.',
+    why:
+      'Un sac ne porte jamais de lettre : il est désigné par un mot entier qu’on entend — ' +
+      '« le sac de papillon ». C’est ainsi qu’on procède en maternelle, et cela évite le piège ' +
+      'du domaine : un enfant qui apprend « cé » là où il faut entendre « chhh » devra ' +
+      'désapprendre. Les sons continus (s, l, f, m, ch, v, r, j, z, n) viennent d’abord parce ' +
+      'qu’ils se tiennent à volonté, donc s’entendent seuls ; les occlusives (p, b, t, d, k, g) ' +
+      'ne se prolongent pas et n’arrivent qu’au niveau 4. Ce n’est pas une difficulté abstraite, ' +
+      'c’est de l’acoustique.',
+    skills: ['phono.onset', 'phono.coda', 'phono.blend'],
+    levels: [
+      'Deux sacs, deux objets. Sons continus seulement.',
+      'Deux sacs, trois objets.',
+      'Trois sacs — l’enfant redit le mot en le rangeant.',
+      'Trois sacs, quatre objets.',
+      'Les sons qui claquent entrent en jeu : p, b, t, d, k, g.',
+      'On écoute la **fin** du mot, plus le début.',
+      'Le mot est dit en morceaux détachés : l’enfant retrouve le mot entier.',
+    ],
+    prompts: {
+      'sons.attaque': 'Écoute bien le début des mots, et range chaque objet dans son sac.',
+      'sons.finale': 'Cette fois, écoute la fin des mots.',
+      'sons.fusion': 'J’ai coupé un mot en morceaux. Devine lequel c’est.',
+    },
+  },
+  {
+    id: 'sable',
+    name: 'Le Sable',
+    goal: 'Conduire un geste jusqu’au bout, puis tracer des lettres.',
+    childDoes:
+      'Il pose le doigt sur le point vert et suit le sillon. Hors du sillon, rien ne s’écrit.',
+    why:
+      'Le contrôle de l’erreur est entièrement dans le dispositif : la trace ne se dépose que ' +
+      'dans le couloir. Aucune croix, aucun son, aucun message — le doigt sort, la trace ' +
+      's’arrête ; il revient, elle reprend. La largeur du couloir dépend de la **dalle** : la ' +
+      'sonde tactile de cet espace la mesure, et un écran lent obtient un couloir plus large. ' +
+      'Sans cela, l’enfant vivrait un échec qu’il n’a pas commis. On ne dit jamais le nom d’une ' +
+      'lettre : après avoir tracé un L, l’enfant redit « lune ».',
+    skills: ['letter.pregraphism', 'letter.trace'],
+    levels: [
+      'Le trait vertical, puis le trait horizontal.',
+      'Les obliques, et le premier changement de direction.',
+      'Le rond, le pont, le creux.',
+      'Vagues et zigzags — l’enfant dit ce qu’il a tracé.',
+      'Premières lettres, faites de traits droits : L, T, V, N.',
+      'Lettres à courbe : C, S, P, J.',
+      'Lettres à plusieurs traits : M, F, R, Z.',
+    ],
+    prompts: {
+      'sable.tracer': 'Pose ton doigt sur le point vert, et suis le chemin.',
+      'sable.lettre': 'Suis le chemin de la lettre, sans lever le doigt.',
+    },
+  },
+  {
+    id: 'chateau',
+    name: 'Le Château des mots',
+    goal: 'Ranger les mots par familles — et savoir ce qu’un mot désigne.',
+    childDoes:
+      'Il écoute les salles et les objets, puis glisse chaque objet dans la salle où il vit.',
+    why:
+      'Classer est ce qui fait passer un mot du statut d’étiquette à celui de sens : un enfant ' +
+      'qui range la banane avec la fraise et non avec le lapin sait de « banane » quelque chose ' +
+      'que la répétition du mot ne lui donne pas. L’enseigne d’une salle ne change jamais d’une ' +
+      'séance à l’autre — sinon l’enfant réapprend un décor au lieu de classer. Au dernier ' +
+      'niveau, toutes les cartes sont de la même famille : il ne reste que le mot à reconnaître.',
+    skills: ['lang.category', 'lang.vocabulary'],
+    levels: [
+      'Deux salles, deux objets.',
+      'Deux salles, trois objets.',
+      'Trois salles — l’enfant nomme ce qu’il range.',
+      'Trois salles, quatre objets.',
+      'L’intrus : trois objets d’une famille, un qui n’en est pas.',
+      'Trois salles, cinq objets.',
+      'Apporter l’objet nommé, parmi ses voisins de famille.',
+    ],
+    prompts: {
+      'chateau.ranger': 'Écoute, puis range chaque objet dans sa salle.',
+      'chateau.intrus': 'Un objet n’est pas de la famille. Mets-le dehors.',
+      'chateau.apporter': 'Apporte-moi…',
+      'chateau.dehors': 'dehors',
+      'chateau.salle.animaux': 'les animaux',
+      'chateau.salle.cuisine': 'la cuisine',
+      'chateau.salle.dehors': 'le jardin',
+      'chateau.salle.jouets': 'les jouets',
+      'chateau.salle.habits': 'les habits',
+      'chateau.salle.chambre': 'la chambre',
+      'chateau.salle.corps': 'le corps',
+    },
+  },
+  {
+    id: 'recit',
+    name: 'Le Récit',
+    goal: 'Tenir une histoire entière en tête, et la remettre dans l’ordre.',
+    childDoes:
+      'Il écoute l’histoire, puis glisse les images à leur place. Toucher une image la redit.',
+    why:
+      'Remettre en ordre des images entendues une seule fois serait une épreuve de mémoire ' +
+      'immédiate, pas de récit : chaque image se redit d’un simple contact, autant de fois qu’il ' +
+      'le faut. Les histoires sont chronologiques et non allusives — à cet âge, l’enfant ' +
+      'reconstruit un enchaînement qu’il a vécu (se réveiller, puis s’endormir), il ne déduit ' +
+      'pas encore. Chaque panneau montre un objet différent : c’est ce qui les rend ' +
+      'distinguables une fois mélangés.',
+    skills: ['lang.narrative'],
+    levels: [
+      'Deux images à remettre dans l’ordre.',
+      'Trois images.',
+      'Trois images — l’enfant raconte à son tour.',
+      'Quatre images.',
+      'Une question sur l’histoire, deux réponses possibles.',
+      'Quatre images, et une question à trois réponses.',
+      'Ordonner **puis** répondre, sur la même histoire.',
+    ],
+    prompts: {
+      'recit.ecoute': 'Écoute bien l’histoire.',
+      'recit.ordonner': 'Maintenant, remets les images dans l’ordre.',
+    },
+  },
 ];
 
 /* ------------------------------------------------------------------ */
