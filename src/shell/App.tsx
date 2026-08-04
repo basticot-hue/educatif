@@ -34,6 +34,7 @@ import { Interlude } from './Interlude';
 import { Parent } from './Parent';
 import { ParentDoor } from './ParentDoor';
 import { Shelf, type ShelfId } from './Shelf';
+import { Studio } from './Studio';
 import { Welcome } from './Welcome';
 import './shell.css';
 
@@ -176,7 +177,15 @@ export function App() {
         // Sans historique lisible, on laisse jouer plutôt que de refuser.
       }
       relaunchBlocked.current = blocked;
-      setStage((current) => (current === 'boot' ? (blocked ? 'end' : 'welcome') : current));
+      /*
+       * Relance dans l'heure : on va au Studio, pas à l'écran terminal.
+       *
+       * La séance ne se rejoue pas — c'est ce qui évite l'apprentissage à la
+       * chaîne et la réclamation quotidienne. Mais un écran mort n'était pas
+       * l'intention de la spécification, qui renvoie ici vers le Studio :
+       * l'enfant qui revient trouve de quoi faire, simplement rien à réussir.
+       */
+      setStage((current) => (current === 'boot' ? (blocked ? 'studio' : 'welcome') : current));
     })();
   }, [packReady]);
 
@@ -312,9 +321,21 @@ export function App() {
 
       {stage === 'welcome' && <Welcome pack={pack} onPick={(c) => void onPickCharacter(c)} />}
 
-      {stage === 'shelf' && <Shelf available={[...shelf, 'fabrique']} onPick={onPickActivity} />}
+      {stage === 'shelf' && (
+        <Shelf available={[...shelf, 'fabrique', 'studio']} onPick={onPickActivity} />
+      )}
 
       {stage === 'fabrique' && <Fabrique onDone={() => setStage('shelf')} />}
+
+      {/*
+        Le Studio se quitte vers l'étagère en cours de séance, mais vers l'écran
+        terminal quand on y est arrivé par une relance dans l'heure : dans ce
+        cas il n'y a pas de séance derrière, et renvoyer à l'étagère la ferait
+        commencer — exactement ce que la fenêtre d'une heure empêche.
+      */}
+      {stage === 'studio' && (
+        <Studio onDone={() => setStage(relaunchBlocked.current ? 'end' : 'shelf')} />
+      )}
 
       {stage === 'activity' && character && (
         <ActivityHost

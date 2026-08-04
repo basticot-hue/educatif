@@ -213,7 +213,14 @@ export function Fabrique({ onDone }: Props) {
           onPointerDown={(e) => {
             if (step !== 'detourage') return;
             drawing.current = true;
-            e.currentTarget.setPointerCapture?.(e.pointerId);
+            try {
+              // `setPointerCapture` jette si le pointeur n'est plus actif, et
+              // `?.` ne protège que d'une méthode absente. L'exception
+              // sautait le premier coup de gomme.
+              e.currentTarget.setPointerCapture(e.pointerId);
+            } catch {
+              // Sans capture, le détourage s'arrête au bord du canvas.
+            }
             erase(e);
           }}
           onPointerMove={erase}

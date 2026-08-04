@@ -1,0 +1,87 @@
+/* Le Studio. Aucun texte : l'enfant ne lit pas. */
+
+.studio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--gap) * 1.5);
+}
+
+.studio-row {
+  display: flex;
+  gap: calc(var(--gap) * 1.5);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.studio-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(34vw, 300px);
+  height: min(34vh, 240px);
+  min-width: var(--target);
+  min-height: var(--target);
+  border-radius: calc(var(--radius) * 1.5);
+  background: var(--surface);
+  color: var(--ink);
+  transition: transform var(--t-fast) ease-out;
+}
+
+.studio-tile svg {
+  width: 56%;
+  height: 56%;
+}
+
+.studio-tile:active {
+  transform: scale(0.97);
+}
+
+/* --- la feuille --- */
+
+.studio-board {
+  flex-direction: column;
+  gap: var(--gap);
+  padding: var(--gap);
+}
+
+.board {
+  flex: 1;
+  width: 100%;
+  border-radius: var(--radius);
+  /* La feuille prend tout ce qu'elle peut : c'est la surface de travail, et
+     tout le reste de l'écran n'est qu'outillage. */
+  min-height: 0;
+}
+
+.board-tools {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap);
+  flex: none;
+}
+
+/* Pastilles d'encre : jamais moins de 88 px, comme toute cible de l'app. */
+.ink {
+  width: var(--target);
+  height: var(--target);
+  border-radius: 50%;
+  border: 4px solid transparent;
+  transition: transform var(--t-fast) ease-out;
+}
+
+/*
+ * La couleur choisie se signale par un anneau, pas par une taille différente :
+ * une pastille qui grandit devient une cible mouvante, et le doigt la rate.
+ */
+.ink[data-active='true'] {
+  border-color: var(--surface);
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.ink:active {
+  transform: scale(0.94);
+}

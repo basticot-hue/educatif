@@ -128,6 +128,20 @@ function RecitIcon() {
   );
 }
 
+/** Un mur de cadres et un pinceau : regarder ce qu'on a fait, en faire encore. */
+function StudioIcon() {
+  return (
+    <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect x="18" y="20" width="44" height="40" rx="6" fill="#12212E" opacity="0.14" />
+      <rect x="18" y="68" width="44" height="34" rx="6" fill="#12212E" opacity="0.3" />
+      <rect x="72" y="20" width="44" height="34" rx="6" fill="#12212E" opacity="0.3" />
+      <rect x="72" y="62" width="44" height="40" rx="6" fill="#12212E" opacity="0.14" />
+      <path d="M150 22 L178 50 L154 74 L126 46 Z" fill="#E4B429" />
+      <path d="M126 46 L154 74 L138 88 Q124 92 122 76 Z" fill="#E4B429" opacity="0.6" />
+    </svg>
+  );
+}
+
 /** Un appareil photo et un objet : ce qu'on y fait, sans un mot. */
 function FabriqueIcon() {
   return (
@@ -158,6 +172,7 @@ const ICONS: Partial<Record<ShelfId, () => React.ReactElement>> = {
   chateau: ChateauIcon,
   recit: RecitIcon,
   fabrique: FabriqueIcon,
+  studio: StudioIcon,
 };
 
 interface Props {

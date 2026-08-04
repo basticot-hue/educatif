@@ -1,6 +1,12 @@
 /* Le mur des trésors. */
 
-.wall-screen {
+/*
+ * `.screen` centre son contenu, et sa règle gagne à spécificité égale — sa
+ * feuille est chargée après celle-ci. Un mur bien rempli défilerait alors
+ * depuis un premier rang flottant au milieu de l'écran. On monte donc d'un cran
+ * plutôt que de compter sur l'ordre des imports, qui dépend de qui importe qui.
+ */
+.screen.wall-screen {
   justify-content: flex-start;
   padding: var(--gap);
   overflow-y: auto;

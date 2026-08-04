@@ -15,8 +15,13 @@ Les **sept ateliers** sont là, chacun sur ses sept niveaux :
 | Le Château des mots | ranger par familles, connaître les mots | écouter, puis glisser dans la bonne salle |
 | Le Récit | tenir une histoire entière en tête | remettre les images dans l'ordre |
 
-S'y ajoute **La Fabrique**, qui n'est pas un atelier : l'enfant y photographie ses propres
-objets, et ils alimentent ensuite les ateliers de sons.
+S'y ajoutent deux espaces **sans consigne**, où rien n'est demandé ni évalué :
+
+- **La Fabrique** — l'enfant photographie ses propres objets et dit leur nom ; ils alimentent
+  ensuite les ateliers de sons.
+- **Le Studio** — le mur des trésors, et une feuille pour dessiner. C'est le seul endroit où
+  l'enfant revoit ce qu'il a produit, et la seule progression visible de l'application : ses
+  tracés, ses objets, ses dessins. Aucun score, aucune étoile, aucune série de jours.
 
 Deux mécaniques partagées portent les ateliers de langage :
 
@@ -109,8 +114,9 @@ créerait des conflits de cycle de vie. `shell/ActivityHost.tsx` fait le pont.
   le script n'a pas ouverte, PWA installée comprise. À la place, un écran terminal sans aucune
   cible tactile, dont on ne sort que par l'espace parent. L'intention — jamais de « encore une
   partie ? » — est préservée ; le verrou réel est l'épinglage d'écran.
-- **Relance dans l'heure** : la spécification renvoie vers le Studio, qui n'existe pas. On va
-  donc directement à l'écran terminal.
+- **Relance dans l'heure** : conforme à la spécification — on arrive au Studio. La séance ne se
+  rejoue pas, mais l'enfant qui revient trouve de quoi faire plutôt qu'un écran mort. Il n'y a
+  simplement rien à y réussir.
 - **Images des mots** : aucune photographie n'est livrée. Une banque d'images pèserait
   plusieurs dizaines de mégaoctets à embarquer hors ligne et ne se redistribuerait pas sans
   conditions. Les mots sont donc dessinés — contour d'encre et ombre au sol, parce qu'à cet âge
