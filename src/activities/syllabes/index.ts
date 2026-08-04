@@ -193,7 +193,7 @@ class SyllabesActivity implements Activity {
 
     const holder = el('div', 'bal-mascot-holder', scene);
     const mascot = el('img', 'bal-mascot', holder);
-    const character = this.props.pack.characters[0];
+    const character = this.props.character;
     mascot.src = character.image;
     mascot.alt = '';
 

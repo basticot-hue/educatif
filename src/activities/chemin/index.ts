@@ -187,8 +187,9 @@ class CheminActivity implements Activity {
   }
 
   private async preload(): Promise<void> {
-    const character =
-      this.props.pack.characters.find((c) => c.roles.includes('pion')) ?? this.props.pack.characters[0];
+    // Le pion est le personnage que l'enfant a choisi, pas le premier venu du
+    // pack : c'est *lui* qui avance sur la piste.
+    const character = this.props.character;
     const goal = this.props.pack.activityAssets.chemin?.goal;
 
     this.pawnImage = cachedImage(character.image) ?? (await loadImage(character.image).catch(() => null));

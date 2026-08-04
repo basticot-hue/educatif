@@ -197,6 +197,17 @@ export interface ActivityProps {
   level: number;
   items: Item[];
   pack: UniversePack;
+  /**
+   * Le personnage **choisi par l'enfant**, celui qui l'accompagne toute la
+   * séance.
+   *
+   * Les ateliers le devinaient auparavant — le premier du pack, ou le premier
+   * portant le rôle « pion ». C'était toujours Mila : l'enfant choisissait
+   * Stella à l'accueil et voyait Mila avancer sur la piste. Or l'attachement au
+   * héros est le ressort du dispositif ; le trahir dès le premier écran coûte
+   * plus cher que n'importe quel réglage de niveau.
+   */
+  character: PackCharacter;
 
   /** Énonce une clé. Résout quand l'énoncé est terminé. */
   speak(key: SpeechKey): Promise<void>;

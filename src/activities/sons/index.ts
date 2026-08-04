@@ -208,7 +208,10 @@ class SonsActivity implements Activity {
       bins: [
         {
           id: 'sac',
-          glyph: sackGlyph(),
+          // Le sac du personnage, si le parent lui en a donné un ; le sac
+          // dessiné sinon. L'atelier ne sait pas qu'un thème existe : il lit
+          // l'asset du pack, comme pour n'importe quel autre décor.
+          ...binFace(this.props.pack.activityAssets.sons?.bag, sackGlyph()),
           label: 'le sac',
           accepts: [round.target.id],
         },
@@ -240,6 +243,14 @@ class SonsActivity implements Activity {
       await wait(260);
     }
   }
+}
+
+/**
+ * Une cible se peint soit avec l'image fournie par le thème, soit avec le
+ * dessin de repli. Jamais les deux, et jamais rien.
+ */
+function binFace(asset: unknown, fallback: string): { image?: string; glyph?: string } {
+  return typeof asset === 'string' && asset.length > 0 ? { image: asset } : { glyph: fallback };
 }
 
 /** Un sac ouvert. Zéro texte : c'est l'endroit où l'on pose, rien de plus. */

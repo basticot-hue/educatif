@@ -15,6 +15,10 @@ Les **sept ateliers** sont là, chacun sur ses sept niveaux :
 | Le Château des mots | ranger par familles, connaître les mots | écouter, puis glisser dans la bonne salle |
 | Le Récit | tenir une histoire entière en tête | remettre les images dans l'ordre |
 
+Chaque tuile de l'étagère montre **ce qu'on fait derrière** — c'est le seul écran où l'enfant
+décide, et il décide sans savoir lire. Le parent peut y substituer sa propre photo, comme pour
+les mots.
+
 S'y ajoutent deux espaces **sans consigne**, où rien n'est demandé ni évalué :
 
 - **La Fabrique** — l'enfant photographie ses propres objets et dit leur nom ; ils alimentent
@@ -131,6 +135,25 @@ créerait des conflits de cycle de vie. `shell/ActivityHost.tsx` fait le pont.
   **décroissante**.
 - **Sonde tactile** : la mesure d'échantillonnage exigée avant Le Sable est déjà en place dans
   l'espace parent, pour ne pas avoir à redéployer et refaire une séance juste pour mesurer.
+
+## Le monde d'un personnage
+
+L'attachement au héros est ce qui fait revenir l'enfant. Chaque personnage porte donc **sa
+couleur et ses objets**, réglés dans l'espace parent (Les personnages → *Son monde*) :
+
+- une **palette** parmi huit, vérifiées une à une — la carte se détache du fond, l'accent se
+  voit sur les deux. Pas de sélecteur libre : l'accent est le seul retour positif de
+  l'application, et une couleur mal choisie l'efface ;
+- quatre **objets** remplaçables par une image : le but du Chemin (le phare devient
+  l'hélicoptère de Stella, la tour de Raiponce), l'objet des Missions, le sac, la porte.
+
+Rien de tout cela ne touche à ce qui est enseigné : mêmes niveaux, mêmes items, même
+progression d'un personnage à l'autre. Seul le décor change — et le personnage lui-même, qui
+est désormais *celui que l'enfant a choisi* dans chaque atelier, et non plus la première
+mascotte du pack.
+
+`content/theme.ts` habille une copie du pack ; aucun atelier ne sait qu'un thème existe, ce qui
+permet d'en ajouter un emplacement sans en toucher un seul.
 
 ## Contenu
 

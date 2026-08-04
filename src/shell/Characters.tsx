@@ -32,6 +32,7 @@ import { getBlob } from '../engine/storage';
 import type { Speaker } from '../engine/speech';
 import type { UniversePack } from '../engine/types';
 import { CharacterEditor } from './CharacterEditor';
+import { ThemeEditor } from './ThemeEditor';
 
 interface Props {
   /** Pack **d'origine**, sans les personnages du parent déjà fusionnés. */
@@ -54,6 +55,8 @@ interface Row {
 export function Characters({ pack, speaker, onClose, onChanged }: Props) {
   const [rows, setRows] = useState<Row[]>([]);
   const [editing, setEditing] = useState<CustomCharacter | null | 'new'>(null);
+  /** Personnage dont on règle le monde : couleur et objets. */
+  const [theming, setTheming] = useState<{ id: string; name: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
   const urls = useRef<string[]>([]);
@@ -112,6 +115,20 @@ export function Characters({ pack, speaker, onClose, onChanged }: Props) {
       urls.current.splice(0).forEach(URL.revokeObjectURL);
     };
   }, [refresh]);
+
+  if (theming) {
+    return (
+      <ThemeEditor
+        characterId={theming.id}
+        characterName={theming.name}
+        onChanged={onChanged}
+        onClose={() => {
+          setTheming(null);
+          void refresh();
+        }}
+      />
+    );
+  }
 
   if (editing !== null) {
     return (
@@ -231,6 +248,12 @@ export function Characters({ pack, speaker, onClose, onChanged }: Props) {
               <div className="btn-row" style={{ justifyContent: 'center', marginTop: 10 }}>
                 <button className="btn" onClick={() => inputs.current[row.id]?.click()}>
                   Image
+                </button>
+                <button
+                  className="btn ghost"
+                  onClick={() => setTheming({ id: row.id, name: row.name })}
+                >
+                  Son monde
                 </button>
                 {row.custom && (
                   <button className="btn ghost" onClick={() => setEditing(row.custom)}>

@@ -31,6 +31,7 @@ export function ActivityHost({ activity, ...props }: HostProps) {
       level: latest.current.level,
       items: latest.current.items,
       pack: latest.current.pack,
+      character: latest.current.character,
       speak: (key) => latest.current.speak(key),
       recordVoice: (itemId) => latest.current.recordVoice(itemId),
       onItemResult: (r) => latest.current.onItemResult(r),

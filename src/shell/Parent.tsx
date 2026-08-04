@@ -30,6 +30,7 @@ import { ActivityDocs } from './ActivityDocs';
 import { Characters } from './Characters';
 import { Objects } from './Objects';
 import { TouchProbe } from './TouchProbe';
+import { ShelfSheet } from './ShelfSheet';
 import { WordSheet } from './WordSheet';
 import './parent.css';
 
@@ -53,7 +54,7 @@ interface Props {
 export function Parent(props: Props) {
   const [open, setOpen] = useState(false);
   const [panel, setPanel] = useState<
-    'main' | 'probe' | 'words' | 'docs' | 'characters' | 'objects'
+    'main' | 'probe' | 'words' | 'tiles' | 'docs' | 'characters' | 'objects'
   >('main');
 
   if (!open) return <Gate onPass={() => setOpen(true)} onCancel={props.onClose} />;
@@ -62,6 +63,11 @@ export function Parent(props: Props) {
     // Une photo substituée change ce que les ateliers affichent : le pack est
     // rechargé comme pour un personnage remplacé.
     return <WordSheet onClose={() => setPanel('main')} onChanged={props.onPackChanged} />;
+  }
+  if (panel === 'tiles') {
+    // Une tuile substituée change ce que l'enfant voit sur l'étagère : même
+    // rechargement que pour une photo de mot.
+    return <ShelfSheet onClose={() => setPanel('main')} onChanged={props.onPackChanged} />;
   }
   if (panel === 'docs') return <ActivityDocs onClose={() => setPanel('main')} />;
   if (panel === 'objects') {
@@ -84,6 +90,7 @@ export function Parent(props: Props) {
       {...props}
       onProbe={() => setPanel('probe')}
       onWords={() => setPanel('words')}
+      onTiles={() => setPanel('tiles')}
       onDocs={() => setPanel('docs')}
       onCharacters={() => setPanel('characters')}
       onObjects={() => setPanel('objects')}
@@ -127,6 +134,7 @@ function ParentPanels({
   onRestart,
   onProbe,
   onWords,
+  onTiles,
   onDocs,
   onCharacters,
   onObjects,
@@ -134,6 +142,7 @@ function ParentPanels({
 }: Props & {
   onProbe: () => void;
   onWords: () => void;
+  onTiles: () => void;
   onDocs: () => void;
   onCharacters: () => void;
   onObjects: () => void;
@@ -275,7 +284,10 @@ function ParentPanels({
             Sonde tactile
           </button>
           <button className="btn ghost" onClick={onWords}>
-            Vérifier les images
+            Les images des mots
+          </button>
+          <button className="btn ghost" onClick={onTiles}>
+            Les tuiles de l'étagère
           </button>
           <button
             className="btn danger"

@@ -13,6 +13,8 @@ import { activityEntry, AVAILABLE_IDS } from '../activities/registry';
 import { applyPalette, defaultPack, preloadPack } from '../content/pack';
 import { applyOverrides, releaseOverrideUrls } from '../content/overrides';
 import { loadWordImages } from '../content/wordImages';
+import { loadActivityIcons } from '../content/activityIcons';
+import { packForCharacter, releaseThemeUrls } from '../content/theme';
 import { pickMission, type Mission } from '../content/missions';
 import { unlockAudio } from '../engine/audio';
 import { enterImmersive, keepAwake, requestPersistentStorage } from '../engine/platform';
@@ -115,10 +117,12 @@ export function App() {
       }
 
       try {
-        // Les photos substituées aux dessins des mots. Chargées ici parce que
-        // les ateliers lisent l'image d'un mot de façon synchrone, au milieu
-        // d'un tour : la chercher à ce moment-là la ferait arriver en retard.
+        // Les photos substituées aux dessins — des mots, et des tuiles de
+        // l'étagère. Chargées ici parce que les ateliers et l'étagère lisent
+        // ces images de façon synchrone, au milieu d'un tour ou d'un rendu :
+        // aller les chercher à ce moment-là les ferait arriver en retard.
         await loadWordImages();
+        await loadActivityIcons();
       } catch {
         // Les dessins embarqués font l'affaire.
       }
@@ -195,7 +199,26 @@ export function App() {
     async (picked: PackCharacter) => {
       await unlockAudio();
       setCharacter(picked);
-      speaker.current = createSpeaker(pack, picked);
+
+      /*
+       * Le décor prend les couleurs et les objets du héros choisi.
+       *
+       * C'est ici et pas au démarrage : avant ce tap, on ne sait pas qui joue.
+       * L'échec est sans conséquence — on garde le pack tel quel, l'enfant joue
+       * dans le décor par défaut.
+       */
+      let themed = pack;
+      try {
+        releaseThemeUrls();
+        themed = await packForCharacter(pack, picked.id);
+        applyPalette(themed);
+        await preloadPack(themed);
+        setPack(themed);
+      } catch {
+        // Thème illisible : le décor du pack fait parfaitement l'affaire.
+      }
+
+      speaker.current = createSpeaker(themed, picked);
 
       const s = new Session(picked.id);
       await s.loadBaselines();
@@ -309,6 +332,13 @@ export function App() {
           session.current = null;
           setSeriesDone(0);
           setCharacter(null);
+          // Le décor du héros précédent ne doit pas survivre à son départ :
+          // l'accueil est le seul écran qui n'appartient à personne.
+          releaseThemeUrls();
+          const base = defaultPack();
+          applyPalette(base);
+          setPack(base);
+          setPackVersion((v) => v + 1);
           setStage('welcome');
         }}
       />
@@ -343,6 +373,7 @@ export function App() {
           level={level}
           items={items}
           pack={pack}
+          character={character}
           speak={speak}
           recordVoice={recordVoice}
           onItemResult={onItemResult}

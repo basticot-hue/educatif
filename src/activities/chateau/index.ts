@@ -188,7 +188,12 @@ class ChateauActivity implements Activity {
       bins: [
         {
           id: 'dehors',
-          glyph: doorGlyph(),
+          // La porte du personnage si le parent lui en a donné une, la porte
+          // dessinée sinon. L'atelier lit un asset du pack et ignore tout du
+          // thème qui l'y a mis.
+          ...(typeof this.props.pack.activityAssets.chateau?.door === 'string'
+            ? { image: this.props.pack.activityAssets.chateau.door as string }
+            : { glyph: doorGlyph() }),
           label: 'dehors',
           sound: 'chateau.dehors',
           tint: TINTS[0],
@@ -237,8 +242,8 @@ class ChateauActivity implements Activity {
       bins: [
         {
           id: 'guide',
-          image: this.props.pack.characters[0]?.portrait,
-          label: this.props.pack.characters[0]?.name ?? 'le guide',
+          image: this.props.character.portrait,
+          label: this.props.character.name,
           accepts: [word.id],
         },
       ],

@@ -65,6 +65,23 @@ export function cachedImage(src: string): HTMLImageElement | null {
   return img?.complete ? img : null;
 }
 
+/**
+ * Un asset d'atelier est-il une image ?
+ *
+ * Le test portait sur la seule extension du fichier. Il laissait donc passer à
+ * côté **toutes les images d'un thème de personnage** : ce sont des `blob:`
+ * fabriquées à la volée, sans extension. L'hélicoptère de Stella n'était pas
+ * préchargé, et se décodait au premier affichage du plateau — exactement la
+ * saccade que le préchargement existe pour éviter.
+ */
+function looksLikeImage(value: string): boolean {
+  return (
+    /\.(svg|png|jpe?g|webp)$/i.test(value) ||
+    value.startsWith('blob:') ||
+    value.startsWith('data:image/')
+  );
+}
+
 /** Précharge tout ce dont un atelier a besoin. À appeler avant `mount()`. */
 export async function preloadPack(pack: UniversePack): Promise<void> {
   const sources = new Set<string>();
@@ -74,7 +91,7 @@ export async function preloadPack(pack: UniversePack): Promise<void> {
   }
   for (const assets of Object.values(pack.activityAssets)) {
     for (const value of Object.values(assets ?? {})) {
-      if (typeof value === 'string' && /\.(svg|png|jpe?g|webp)$/i.test(value)) sources.add(value);
+      if (typeof value === 'string' && looksLikeImage(value)) sources.add(value);
     }
   }
   // Une image manquante ne doit pas empêcher la séance : on ignore les échecs.
