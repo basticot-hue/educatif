@@ -25,6 +25,7 @@ import {
 } from '../engine/storage';
 import type { Speaker } from '../engine/speech';
 import { ACTIVITY_IDS, type SessionRecord, type UniversePack } from '../engine/types';
+import { checkForUpdate, reinstall } from '../engine/update';
 import { micStatus, startRecording, type Recording } from '../engine/voice';
 import { ActivityDocs } from './ActivityDocs';
 import { Characters } from './Characters';
@@ -516,6 +517,79 @@ function VoicePanel({
 
 /* ------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------ */
+
+/**
+ * Mise à jour de l'application installée.
+ *
+ * Une tablette peut rester des jours sur une version périmée sans que rien ne
+ * l'indique : l'application installée est **reprise** depuis la pile des tâches
+ * d'Android, jamais rechargée, et ne va donc jamais voir s'il existe mieux.
+ * `engine/update.ts` corrige ce cas ; ce panneau donne au parent les deux
+ * gestes qui restent utiles — vérifier maintenant, et réinstaller de force.
+ */
+function UpdatePanel() {
+  const [state, setState] = useState<'idle' | 'checking' | 'done' | 'busy'>('idle');
+
+  return (
+    <>
+      <p className="muted">
+        Comparez cette date à celle du dernier déploiement. L'application vérifie d'elle-même
+        s'il existe une nouvelle version à chaque fois qu'on la rouvre, et se recharge seule
+        quand elle en trouve une.
+      </p>
+
+      <div className="btn-row">
+        <button
+          className="btn ghost"
+          disabled={state === 'checking' || state === 'busy'}
+          onClick={async () => {
+            setState('checking');
+            await checkForUpdate(true);
+            // Si une version existe, la page se recharge d'elle-même avant
+            // d'arriver ici : voir le rechargement sur `controllerchange`.
+            setState('done');
+          }}
+        >
+          {state === 'checking' ? 'Recherche…' : 'Chercher une mise à jour'}
+        </button>
+        <button
+          className="btn ghost"
+          disabled={state === 'busy'}
+          onClick={async () => {
+            if (
+              !confirm(
+                "Retélécharger l'application ? La progression, votre voix et les photos ne " +
+                  'sont pas touchées. Une connexion est nécessaire.',
+              )
+            ) {
+              return;
+            }
+            setState('busy');
+            await reinstall();
+          }}
+        >
+          Retélécharger l'application
+        </button>
+      </div>
+
+      {state === 'done' && (
+        <p className="muted">
+          Aucune version plus récente n'a été trouvée — celle-ci est à jour, ou la tablette est
+          hors ligne.
+        </p>
+      )}
+
+      <p className="muted">
+        Si la date ne bouge toujours pas, utilisez <strong>Retélécharger l'application</strong> :
+        les fichiers de l'application sont supprimés et repris depuis le serveur. Rien de ce que
+        l'enfant a produit n'est concerné — la progression, les enregistrements et les photos
+        sont dans une base séparée, à laquelle cette opération ne touche pas.
+      </p>
+    </>
+  );
+}
+
 function TechPanel({
   storage,
   frenchVoice,
@@ -537,11 +611,7 @@ function TechPanel({
       <p>
         <strong>Version installée :</strong> {buildLabel()}
       </p>
-      <p className="muted">
-        Comparez-la à celle annoncée après un déploiement. Si elle est plus ancienne, fermez
-        complètement l'application et rouvrez-la : le service worker récupère la nouvelle
-        version au lancement suivant, pas pendant l'utilisation.
-      </p>
+      <UpdatePanel />
 
       {storageUnavailable() && (
         <div className="callout">
