@@ -78,6 +78,8 @@ export function cachedSound(key: string): AudioBuffer | null {
 }
 
 let current: AudioBufferSourceNode | null = null;
+/** Résout la promesse du son en cours — qu'il aille au bout ou qu'on le coupe. */
+let endCurrent: (() => void) | null = null;
 
 /**
  * Joue un buffer et résout à la fin. Coupe systématiquement ce qui jouait :
@@ -93,24 +95,49 @@ export function playBuffer(buffer: AudioBuffer): Promise<void> {
     const source = c.createBufferSource();
     source.buffer = buffer;
     source.connect(c.destination);
-    source.onended = () => {
-      if (current === source) current = null;
+
+    const finish = () => {
+      if (endCurrent === finish) {
+        current = null;
+        endCurrent = null;
+      }
       resolve();
     };
+
+    source.onended = finish;
     current = source;
+    endCurrent = finish;
     source.start(0);
   });
 }
 
+/**
+ * Coupe le son en cours — **et résout sa promesse**.
+ *
+ * Ne pas la résoudre était un blocage silencieux et durable. Une séquence qui
+ * énonce plusieurs mots à la suite (`await speak(...)` dans une boucle) restait
+ * suspendue pour toujours dès qu'un son partait par-dessus : c'est exactement ce
+ * qui se passe quand l'enfant touche une carte pendant que l'atelier nomme les
+ * images. La suite des noms n'arrivait jamais, et Le Sac de Chase devenait
+ * injouable puisque tout y repose sur ce qu'on a entendu.
+ *
+ * La promesse dit « ce son ne joue plus », pas « ce son est allé au bout ».
+ */
 export function stopPlayback(): void {
-  if (!current) return;
-  try {
-    current.onended = null;
-    current.stop();
-  } catch {
-    // Déjà terminé.
-  }
+  const source = current;
+  const finish = endCurrent;
   current = null;
+  endCurrent = null;
+
+  if (source) {
+    try {
+      source.onended = null;
+      source.stop();
+    } catch {
+      // Déjà terminé.
+    }
+  }
+  finish?.();
 }
 
 /** Retour haptique léger à l'aimantation. Silencieux si non disponible. */

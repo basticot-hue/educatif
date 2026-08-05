@@ -215,7 +215,20 @@ class RecitActivity implements Activity {
       itemId: `${item.id}.${question.id}`,
       skill: skillForLevel(this.props.level),
       speaks: this.config.childSpeaks,
-      announce: false,
+      /*
+       * On nomme les réponses, contrairement au tour d'ordre.
+       *
+       * `announce: false` y est justifié : les panneaux sont mélangés, et les
+       * nommer dans l'ordre où ils sont posés raconterait l'histoire à
+       * l'envers. Cette raison ne vaut pas pour des cartes-réponses, et le
+       * recopier laissait l'enfant devant deux dessins qu'il n'avait jamais
+       * entendu nommer. La consigne de `sort.ts` est explicite : c'est la seule
+       * garantie qu'il ait entendu tous les mots avant qu'on lui demande de
+       * comparer.
+       *
+       * La cible, elle, ne se renomme pas : la question vient d'être posée.
+       */
+      announceBins: false,
       bins: [
         {
           id: 'guide',

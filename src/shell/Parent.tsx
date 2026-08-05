@@ -332,6 +332,19 @@ function Recap({ session }: { session: SessionRecord | null }) {
   const date = new Date(session.startedAt);
   const spoke = session.results.some((r) => r.spoke);
 
+  /*
+   * Ce qui a réellement été travaillé, lu dans la séance.
+   *
+   * Cette phrase était écrite en dur — « compter en avançant sur une piste » —
+   * quels que soient les ateliers ouverts. Un parent dont l'enfant venait de
+   * passer un quart d'heure sur les histoires lisait qu'il avait compté. Le
+   * récapitulatif est la seule fenêtre du parent sur la séance : s'il ment, il
+   * ne sert à rien.
+   */
+  const worked = session.activities
+    .map((id) => docFor(id)?.goal.replace(/\.$/, '').toLowerCase())
+    .filter((goal): goal is string => Boolean(goal));
+
   return (
     <>
       <h2>Récapitulatif du soir</h2>
@@ -340,10 +353,20 @@ function Recap({ session }: { session: SessionRecord | null }) {
         {date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
       </p>
 
-      <p>
-        Travaillé aujourd'hui : <strong>compter en avançant sur une piste</strong>
-        {spoke ? ", en énonçant les numéros à voix haute" : ''}.
-      </p>
+      {worked.length > 0 ? (
+        <p>
+          Travaillé aujourd'hui :{' '}
+          {worked.map((goal, i) => (
+            <span key={goal}>
+              {i > 0 && (i === worked.length - 1 ? ' et ' : ', ')}
+              <strong>{goal}</strong>
+            </span>
+          ))}
+          {spoke ? ", en parlant à voix haute" : ''}.
+        </p>
+      ) : (
+        <p className="muted">Aucun atelier ouvert pendant cette séance.</p>
+      )}
 
       {session.off && (
         <div className="callout">

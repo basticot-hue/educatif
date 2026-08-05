@@ -187,7 +187,9 @@ class MissionsActivity implements Activity {
 
     const need = this.turn?.need ?? 3;
     this.layout = computeLayout(width, height, need, reserveSize(need));
-    this.placeSlotsAndTokens();
+    // Un redimensionnement ne défait pas le travail de l'enfant : on ne
+    // recalcule que des coordonnées.
+    this.placeSlotsAndTokens(true);
     this.invalidate();
   }
 
@@ -273,29 +275,49 @@ class MissionsActivity implements Activity {
     void this.props.speak('mission.compare');
   }
 
-  private placeSlotsAndTokens(): void {
+  /**
+   * (Re)pose les alvéoles et la réserve aux coordonnées de la mise en page.
+   *
+   * @param keepLoad conserver ce que l'enfant a déjà chargé. Vrai quand on
+   *   recalcule la géométrie sous lui — rotation de la tablette, clavier
+   *   Android, écran partagé. Cette fonction remettait alors `filled` à
+   *   `preloaded` et `slot` à `null` : tout le chargement retournait à la
+   *   réserve, et sur un item à huit caisses c'était le tour entier à refaire,
+   *   sans que rien ne l'explique. Le Chemin, lui, préserve sa position.
+   */
+  private placeSlotsAndTokens(keepLoad = false): void {
     const turn = this.turn;
     if (!turn || this.config.mode === 'compare') return;
 
     const layout = this.layout;
 
+    const wasFilled = this.slots.map((s) => s.filled);
+    const wasSlot = new Map(this.tokens.map((t) => [t.id, t.slot]));
+
     this.slots = Array.from({ length: turn.need }, (_, i) => ({
       x: layout.slotOrigin.x + (i % layout.slotColumns) * layout.slotPitch,
       y: layout.slotOrigin.y + Math.floor(i / layout.slotColumns) * layout.slotPitch,
-      filled: i < turn.preloaded,
+      filled: keepLoad ? (wasFilled[i] ?? false) : i < turn.preloaded,
     }));
 
     // La réserve contient toujours plus que nécessaire : c'est ce surplus qui
     // oblige à décider quand s'arrêter.
     const spare = reserveSize(turn.need) - turn.preloaded;
-    this.tokens = Array.from({ length: Math.max(1, spare) }, (_, i) => ({
-      id: i,
-      x: layout.reserveOrigin.x + (i % layout.reserveColumns) * layout.reservePitch,
-      y: layout.reserveOrigin.y + Math.floor(i / layout.reserveColumns) * layout.reservePitch,
-      homeX: 0,
-      homeY: 0,
-      slot: null,
-    })).map((t) => ({ ...t, homeX: t.x, homeY: t.y }));
+    this.tokens = Array.from({ length: Math.max(1, spare) }, (_, i) => {
+      const homeX = layout.reserveOrigin.x + (i % layout.reserveColumns) * layout.reservePitch;
+      const homeY = layout.reserveOrigin.y + Math.floor(i / layout.reserveColumns) * layout.reservePitch;
+      // Une caisse déjà chargée suit son alvéole, pas sa place en réserve.
+      const slot = keepLoad ? (wasSlot.get(i) ?? null) : null;
+      const seat = slot !== null ? this.slots[slot] : null;
+      return {
+        id: i,
+        x: seat?.x ?? homeX,
+        y: seat?.y ?? homeY,
+        homeX,
+        homeY,
+        slot: seat ? slot : null,
+      };
+    });
   }
 
   private filledCount(): number {

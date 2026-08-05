@@ -52,6 +52,16 @@
   justify-content: flex-end;
   min-width: var(--target);
   width: min(22vw, 190px);
+  /*
+   * La marche dit le nombre de syllabes, elle ne dit pas la taille de la cible.
+   *
+   * Le podium à une marche descendait à 54 px de haut en paysage, soit 61 % du
+   * plancher que l'application s'impose partout ailleurs — et c'est la réponse
+   * de tous les mots d'une syllabe, les plus fréquents au niveau du contraste
+   * fort. Le bouton garde donc ses 88 px ; seul le dessin de la marche, posé au
+   * fond, reste proportionnel.
+   */
+  min-height: var(--target);
   padding: 0;
   transition: transform var(--t-fast) ease-out;
 }

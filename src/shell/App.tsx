@@ -31,6 +31,7 @@ import type {
 import { saveChildVoice, startRecording } from '../engine/voice';
 import { ActivityHost } from './ActivityHost';
 import { EndScreen } from './EndScreen';
+import { ExitDoor } from './ExitDoor';
 import { Fabrique } from './Fabrique';
 import { Interlude } from './Interlude';
 import { Parent } from './Parent';
@@ -63,6 +64,12 @@ export function App() {
   const [packVersion, setPackVersion] = useState(0);
   const [packReady, setPackReady] = useState(false);
   const [pack, setPack] = useState<UniversePack>(() => defaultPack());
+  /**
+   * Vrai quand il n'y a plus de séance derrière le Studio : soit elle vient de
+   * se clore, soit on y est arrivé par une relance dans l'heure. Dans les deux
+   * cas, en sortir mène à l'écran terminal et non à l'étagère — y renvoyer
+   * ferait commencer une séance que l'app vient justement de refuser.
+   */
   const relaunchBlocked = useRef(false);
 
   const [stage, setStage] = useState<Stage>('boot');
@@ -276,6 +283,9 @@ export function App() {
     const chosen = pickMission(s?.dominantSkill() ?? 'counting.sequence', previous);
     setMission(chosen);
     await s?.finish(chosen?.id ?? null);
+    // La séance est close : plus rien ne se rejoue, et le Studio devient la
+    // seule sortie — exactement comme après une relance dans l'heure.
+    relaunchBlocked.current = true;
     setStage('mission');
   }, []);
 
@@ -297,6 +307,22 @@ export function App() {
   /** Après l'interlude, l'enfant retourne choisir : c'est lui qui décide. */
   const afterInterlude = useCallback(() => setStage('shelf'), []);
 
+  /**
+   * L'enfant quitte un atelier en cours de série.
+   *
+   * La série est simplement abandonnée : les items déjà faits comptent, les
+   * suivants n'existent pas. On ne compte **pas** la série comme faite — sinon
+   * traverser deux ateliers en deux secondes suffirait à clore la séance.
+   *
+   * L'abandon est noté : trois abandons signent une séance « off », et c'est
+   * précisément l'information qu'on cherche. Rien n'est dit à l'enfant.
+   */
+  const leaveActivity = useCallback(() => {
+    speaker.current?.stop();
+    session.current?.noteAbandon();
+    setStage('shelf');
+  }, []);
+
   /* ---------------- voix de l'enfant ---------------- */
 
   const speak = useCallback(async (key: string) => {
@@ -315,7 +341,20 @@ export function App() {
   /* ---------------- rendu ---------------- */
 
   const openParent = useCallback(() => {
-    stageBeforeParent.current = stage;
+    /*
+     * On ne revient jamais **dans** un atelier.
+     *
+     * L'espace parent se rend dans une branche à part, ce qui démonte
+     * l'atelier ; au retour, il se remontait, remettait sa file à zéro et
+     * repartait de l'item 1. Les items déjà joués, eux, restaient dans la
+     * séance : ils étaient donc comptés deux fois. Un parent qui jette un œil
+     * au récapitulatif au milieu d'une série faussait la mesure sans le savoir.
+     *
+     * Rendre la main à l'étagère est honnête : la série s'arrête, l'enfant
+     * choisit à nouveau. Ce n'est pas un abandon de sa part — on ne le compte
+     * pas comme tel.
+     */
+    stageBeforeParent.current = stage === 'activity' ? 'shelf' : stage;
     speaker.current?.stop();
     setStage('parent');
   }, [stage]);
@@ -332,6 +371,9 @@ export function App() {
           session.current = null;
           setSeriesDone(0);
           setCharacter(null);
+          // Le parent rouvre explicitement une séance : le Studio redevient un
+          // lieu dont on ressort vers l'étagère.
+          relaunchBlocked.current = false;
           // Le décor du héros précédent ne doit pas survivre à son départ :
           // l'accueil est le seul écran qui n'appartient à personne.
           releaseThemeUrls();
@@ -359,9 +401,9 @@ export function App() {
 
       {/*
         Le Studio se quitte vers l'étagère en cours de séance, mais vers l'écran
-        terminal quand on y est arrivé par une relance dans l'heure : dans ce
-        cas il n'y a pas de séance derrière, et renvoyer à l'étagère la ferait
-        commencer — exactement ce que la fenêtre d'une heure empêche.
+        terminal quand il n'y a plus de séance derrière — relance dans l'heure,
+        ou séance qui vient de se clore. Renvoyer à l'étagère la ferait
+        recommencer, exactement ce que la clôture empêche.
       */}
       {stage === 'studio' && (
         <Studio onDone={() => setStage(relaunchBlocked.current ? 'end' : 'shelf')} />
@@ -381,6 +423,9 @@ export function App() {
         />
       )}
 
+      {/* Un atelier n'est jamais une impasse : on peut toujours en ressortir. */}
+      {stage === 'activity' && character && <ExitDoor onExit={leaveActivity} />}
+
       {stage === 'interlude' && character && (
         <Interlude character={character} speak={() => speak('praise')} onDone={afterInterlude} />
       )}
@@ -392,7 +437,17 @@ export function App() {
           speak={async () => {
             if (mission) await speaker.current?.say(mission.text);
           }}
-          onDone={() => setStage('end')}
+          /*
+           * La mission dite, on va au Studio — pas à l'écran terminal.
+           *
+           * L'app clôt bien la séance : plus aucun atelier, plus rien à
+           * réussir, aucune invitation à recommencer. Mais tomber sur un rond
+           * gris immédiatement après le personnage se lit comme une panne, pas
+           * comme une fin. Le Studio est déjà la réponse retenue pour la
+           * relance dans l'heure : l'enfant regarde ses trésors, dessine, et
+           * c'est lui qui referme en touchant la maison.
+           */
+          onDone={() => setStage('studio')}
         />
       )}
 

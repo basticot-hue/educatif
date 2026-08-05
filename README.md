@@ -117,10 +117,17 @@ créerait des conflits de cycle de vie. `shell/ActivityHost.tsx` fait le pont.
 - **« L'app se ferme »** n'est pas réalisable : `window.close()` est refusé sur une fenêtre que
   le script n'a pas ouverte, PWA installée comprise. À la place, un écran terminal sans aucune
   cible tactile, dont on ne sort que par l'espace parent. L'intention — jamais de « encore une
-  partie ? » — est préservée ; le verrou réel est l'épinglage d'écran.
+  partie ? » — est préservée ; le verrou réel est l'épinglage d'écran. On n'y tombe pas
+  brutalement : la mission dite, la séance aboutit au Studio, et c'est l'enfant qui referme.
+  Le personnage suivi immédiatement d'un rond gris se lisait comme une panne, pas comme une fin.
 - **Relance dans l'heure** : conforme à la spécification — on arrive au Studio. La séance ne se
   rejoue pas, mais l'enfant qui revient trouve de quoi faire plutôt qu'un écran mort. Il n'y a
   simplement rien à y réussir.
+- **Quitter un atelier** : une maison, en bas à gauche, pendant toute la série. La
+  spécification ne la prévoyait pas — mais sans elle, un atelier qui ne plaît pas est une
+  impasse de huit items dont la seule issue est l'espace parent, c'est-à-dire un adulte. Un
+  simple appui, à l'opposé de la porte parent. La série abandonnée ne compte pas comme faite,
+  et l'abandon est enregistré : c'est l'un des trois signaux d'une séance « off ».
 - **Images des mots** : aucune photographie n'est livrée. Une banque d'images pèserait
   plusieurs dizaines de mégaoctets à embarquer hors ligne et ne se redistribuerait pas sans
   conditions. Les mots sont donc dessinés — contour d'encre et ombre au sol, parce qu'à cet âge

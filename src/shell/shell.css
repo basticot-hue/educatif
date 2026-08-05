@@ -128,6 +128,52 @@
 }
 
 /*
+ * Porte de sortie de l'enfant : coin bas-gauche, appui simple.
+ *
+ * Assez visible pour qu'un enfant la trouve seul — c'est sa seule issue — et
+ * assez petite pour ne pas devenir la cible principale de l'écran. Même écart au
+ * bord que la porte parent, pour la même raison : le geste de retour arrière
+ * d'Android capte tout ce qui touche l'arête.
+ */
+.exit-door {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  /*
+   * 88 px, comme toute cible destinée à l'enfant. La porte parent se permet
+   * 64 px parce qu'elle vise un adulte et se défend par un appui long ; celle-ci
+   * est la seule issue d'un enfant de trois ans et demi, et elle était plus
+   * petite que tout ce que l'application juge atteignable par son doigt.
+   */
+  width: var(--target);
+  height: var(--target);
+  padding: 0;
+  border-radius: 50%;
+  background: var(--surface);
+  opacity: 0.55;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--t-fast) ease-out;
+  /* Les ateliers dessinent en plein écran : sans cela, la porte passe dessous. */
+  z-index: 2;
+}
+
+.exit-door svg {
+  width: 62%;
+  height: 62%;
+}
+
+.exit-door .glyph {
+  stroke: var(--ink);
+}
+
+.exit-door:active {
+  transform: scale(0.94);
+  opacity: 0.85;
+}
+
+/*
  * Porte parent : coin bas-droit, appui long de deux secondes.
  *
  * L'écart au bord n'est pas esthétique : sur Android, un appui contre l'arête

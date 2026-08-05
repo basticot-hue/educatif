@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeLayout, MIN_TARGET } from './layout';
+import { computeLayout, DOOR_ZONE, MIN_TARGET } from './layout';
 import { configForLevel, MAX_ON_SCREEN, reserveSize } from './levels';
 
 /**
@@ -71,6 +71,34 @@ describe('mise en page des Missions', () => {
       const config = configForLevel(level);
       expect(config.max + config.addend).toBeLessThanOrEqual(MAX_ON_SCREEN);
       expect(config.max).toBeGreaterThanOrEqual(config.min);
+    }
+  });
+
+  /*
+   * Les deux portes flottent dans les coins bas, au-dessus du canvas : la
+   * sortie de l'enfant à gauche, l'espace parent à droite.
+   *
+   * La réserve est la seule bande de l'atelier posée contre le bas de l'écran,
+   * donc la seule qui puisse passer dessous. Elle l'a fait : la première caisse
+   * était centrée à 70 px du bord gauche, sous une porte qui va jusqu'à 100.
+   * L'enfant qui l'attrapait par le bas quittait l'atelier, et le moteur
+   * comptait un abandon. Un tiers de sa surface de préhension ouvrait la porte.
+   */
+  it('ne pose aucune caisse sous les portes des coins bas', () => {
+    for (const [w, h] of VIEWPORTS) {
+      for (const need of SLOT_COUNTS) {
+        const reserve = reserveSize(need);
+        const layout = computeLayout(w, h, need, reserve);
+        const where = `${w}×${h}, ${need} alvéoles`;
+
+        const left = layout.reserveOrigin.x - layout.tokenSize / 2;
+        expect(left, `bord gauche — ${where}`).toBeGreaterThanOrEqual(DOOR_ZONE);
+
+        const lastColumn = Math.min(reserve, layout.reserveColumns) - 1;
+        const right =
+          layout.reserveOrigin.x + lastColumn * layout.reservePitch + layout.tokenSize / 2;
+        expect(right, `bord droit — ${where}`).toBeLessThanOrEqual(w - DOOR_ZONE);
+      }
     }
   });
 

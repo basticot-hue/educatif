@@ -9,6 +9,18 @@
   padding: var(--gap);
 }
 
+/*
+ * Deux cibles côte à côte. L'écart vaut une fois et demie la gouttière : à trois
+ * ans et demi, viser l'appareil photo ne doit jamais faire sortir de l'atelier.
+ */
+.fab-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--gap) * 1.5);
+  flex-wrap: wrap;
+}
+
 /* Cibles très larges : ce sont les seules choses à toucher de l'écran. */
 .big-round {
   width: min(28vh, 168px);

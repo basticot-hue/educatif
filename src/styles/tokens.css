@@ -17,6 +17,21 @@
   --target: 88px;
   --gap: 24px;
 
+  /*
+   * Bande réservée aux deux portes, dans les coins bas : la sortie de l'enfant
+   * à gauche, l'espace parent à droite.
+   *
+   * Aucun atelier ne doit poser quoi que ce soit dedans. Sans cette réserve, la
+   * première caisse des Missions et la première carte du Récit passaient sous
+   * la porte de sortie : l'enfant visait un objet, touchait un peu bas, et se
+   * retrouvait éjecté de l'atelier. Un tiers de la surface de préhension de
+   * cette caisse ouvrait en réalité la porte.
+   *
+   * `MIN_TARGET` + le retrait du bord. Le même nombre est repris en dur dans
+   * `activities/missions/layout.ts`, qui calcule sa géométrie en pixels.
+   */
+  --door-zone: 100px;
+
   --radius: 18px;
 
   /* Durées : uniquement pour du mouvement fonctionnel. */

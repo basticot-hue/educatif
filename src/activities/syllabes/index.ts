@@ -186,7 +186,17 @@ class SyllabesActivity implements Activity {
       podiums.push(podium);
     }
 
-    const card = el('div', 'bal-card', scene);
+    /*
+     * La carte est un bouton, et elle redit le mot.
+     *
+     * Elle était un `div` muet : l'enfant qui avait oublié le mot entre la
+     * frappe et le podium n'avait aucun moyen de le redemander, et posait au
+     * hasard. Les niveaux 4 à 6, deux fonctions plus bas, faisaient déjà
+     * exactement cela avec leur `prompt-card`.
+     */
+    const card = el('button', 'bal-card', scene);
+    card.setAttribute('aria-label', word.label);
+    card.addEventListener('click', () => void this.speakSplit(word));
     const image = el('img', undefined, card);
     image.src = wordImage(word);
     image.alt = '';
@@ -220,7 +230,17 @@ class SyllabesActivity implements Activity {
       tick();
     };
 
-    // 1. Le mot, prononcé lentement syllabe par syllabe.
+    /*
+     * 1. La consigne, puis le mot syllabe par syllabe.
+     *
+     * La consigne manquait purement et simplement. Elle existe dans
+     * `prompts.ts`, l'espace parent la montre, le parent peut même enregistrer
+     * sa voix dessus — mais aucune ligne ne la prononçait. Sur toute une série,
+     * l'enfant n'entendait que des syllabes, et jamais ce qu'on attendait de
+     * lui. Les autres ateliers disent tous la leur.
+     */
+    await this.props.speak('syllabes.frapper');
+    if (this.generation !== generation) return;
     await this.speakSplit(word);
     if (this.generation !== generation) return;
 
@@ -292,6 +312,10 @@ class SyllabesActivity implements Activity {
         tapZone.setAttribute('aria-label', 'frapper');
         tapZone.addEventListener('click', () => registerClap(claps + 1));
       }
+      // La fenêtre d'écoute est passée : on dit la seconde moitié de la
+      // consigne, celle qui demande de poser la carte. Elle n'était, elle non
+      // plus, jamais prononcée.
+      if (!this.disposed) void this.props.speak('syllabes.podium');
     }, LISTEN_MS + 200);
   }
 
@@ -436,18 +460,38 @@ class SyllabesActivity implements Activity {
   private buildChoiceRound(item: Item, word: WordCard): ChoiceRound | null {
     const skill = skillForLevel(this.props.level);
 
-    // Niveaux 4 à 6 : la réponse est une **position de syllabe**, pas un mot.
+    /*
+     * Niveaux 4 à 6 : la réponse est une **position de syllabe**, pas un mot.
+     *
+     * Chaque rang porte son propre son. Sans lui, `choice.ts` refuse de
+     * répondre à l'appui long (« if (!option.sound) return »), et les trois
+     * boutons — des points, dont un seul est plein — restaient définitivement
+     * muets. Leur `label` n'est lu que par les lecteurs d'écran : l'enfant ne
+     * l'entendait jamais, et ne pouvait que taper au hasard.
+     */
     const positions = word.split.map((part, i) => ({
       id: `pos${i}`,
       glyph: syllableGlyph(i + 1, word.split.length),
       label: part,
+      sound: `syl.${part}`,
     }));
 
+    const last = word.split.length - 1;
+
+    /**
+     * Rang demandé à ce niveau.
+     *
+     * `supprimer` visait `last`, c'est-à-dire le morceau que la consigne vient
+     * justement de faire enlever. « Enlève le dernier morceau, quel morceau
+     * reste à la fin ? » sur « mai-son » attendait « son ». La bonne réponse,
+     * « mai », était refusée, comptée comme un échec, et faisait redescendre
+     * d'un niveau l'enfant qui avait raison.
+     */
     const target =
       this.config.mode === 'localiser'
-        ? 0
+        ? localiserTarget(word)
         : this.config.mode === 'supprimer'
-          ? word.split.length - 1
+          ? Math.max(0, last - 1)
           : 1;
 
     const promptKey =
@@ -456,6 +500,21 @@ class SyllabesActivity implements Activity {
         : this.config.mode === 'supprimer'
           ? 'syllabes.supprimer'
           : 'syllabes.inverser';
+
+    /**
+     * Le mot découpé, puis — au niveau « localiser » — le morceau à retrouver.
+     *
+     * « Écoute où se trouve **ce** morceau » ne désignait aucun morceau : on
+     * énonçait le mot entier, et la réponse était invariablement le premier
+     * rang. Réussir ne pouvait venir que d'une règle apprise par cœur
+     * (« toujours le premier »), c'est-à-dire de tout sauf d'écouter.
+     */
+    const sayTask = async () => {
+      await this.speakSplit(word);
+      if (this.config.mode !== 'localiser' || this.disposed) return;
+      await wait(240);
+      await this.props.speak(`syl.${word.split[target]}`);
+    };
 
     return {
       itemId: item.id,
@@ -466,13 +525,26 @@ class SyllabesActivity implements Activity {
       options: positions,
       prompt: async () => {
         await this.props.speak(promptKey);
-        await this.speakSplit(word);
+        await sayTask();
       },
-      contrast: async () => {
-        await this.speakSplit(word);
-      },
+      contrast: sayTask,
     };
   }
+}
+
+/**
+ * Rang à retrouver au niveau « localiser ».
+ *
+ * Dérivé du mot, donc **stable** : la répétition espacée suit un item dans le
+ * temps, et un tirage au sort à chaque passage comparerait des choses
+ * différentes. Variable d'un mot à l'autre en revanche — sinon la position
+ * demandée serait toujours la même, et « c'est le premier » suffirait à
+ * réussir sans jamais écouter le morceau.
+ */
+export function localiserTarget(word: WordCard): number {
+  let sum = 0;
+  for (let i = 0; i < word.id.length; i++) sum += word.id.charCodeAt(i);
+  return sum % word.split.length;
 }
 
 /**

@@ -105,6 +105,17 @@ export class SortRunner {
   private assisted = false;
   private spoke = false;
   private placed = new Set<string>();
+  /**
+   * Vrai dès que l'enfant touche quelque chose pendant la présentation.
+   *
+   * Nommer les images est une **offre**, pas une cérémonie à laquelle il faut
+   * assister. Tant qu'elle se poursuivait par-dessus les gestes de l'enfant, les
+   * deux se coupaient mutuellement : chaque énoncé arrête celui d'avant, si bien
+   * que toucher une carte pendant la présentation faisait entendre le mot
+   * *suivant* de la liste à la place — ou rien du tout. Au premier contact, la
+   * présentation s'arrête net et laisse la main.
+   */
+  private interrupted = false;
 
   private binNodes = new Map<string, HTMLElement>();
   private timers = new Set<ReturnType<typeof setTimeout>>();
@@ -138,6 +149,7 @@ export class SortRunner {
     this.assisted = false;
     this.spoke = false;
     this.placed = new Set();
+    this.interrupted = false;
 
     this.render(round);
 
@@ -147,6 +159,18 @@ export class SortRunner {
     if (round.announce !== false) await this.announce(round);
     if (this.disposed) return;
 
+    // Si l'enfant a coupé la présentation, le chronomètre est déjà parti de son
+    // premier contact : le remettre ici lui offrirait le temps qu'il a pris.
+    if (!this.interrupted) this.startedAt = performance.now();
+  }
+
+  /**
+   * L'enfant touche l'écran : la présentation s'efface, et c'est de cet instant
+   * que compte la latence — c'est là qu'il a commencé à répondre.
+   */
+  private noteInteraction(): void {
+    if (this.interrupted) return;
+    this.interrupted = true;
     this.startedAt = performance.now();
   }
 
@@ -157,25 +181,38 @@ export class SortRunner {
    * dessins.
    */
   private async announce(round: SortRound): Promise<void> {
+    /** Nomme une image en la soulevant, sauf si l'enfant a repris la main. */
+    const name = async (node: HTMLElement | null | undefined, sound: SpeechKey) => {
+      if (this.stopNaming()) return;
+      node?.classList.add('naming');
+      await this.host.speak(sound);
+      node?.classList.remove('naming');
+      if (this.stopNaming()) return;
+      await wait(220);
+    };
+
     if (round.announceBins) {
       for (const bin of round.bins) {
-        if (this.disposed || !bin.sound) continue;
-        const node = this.binNodes.get(bin.id);
-        node?.classList.add('naming');
-        await this.host.speak(bin.sound);
-        node?.classList.remove('naming');
-        await wait(220);
+        if (!bin.sound) continue;
+        await name(this.binNodes.get(bin.id), bin.sound);
       }
     }
 
     for (const card of round.cards) {
-      if (this.disposed || !card.sound) continue;
+      if (!card.sound) continue;
       const node = this.root.querySelector<HTMLElement>(`[data-card="${CSS.escape(card.id)}"]`);
-      node?.classList.add('naming');
-      await this.host.speak(card.sound);
-      node?.classList.remove('naming');
-      await wait(220);
+      await name(node, card.sound);
     }
+  }
+
+  /**
+   * La présentation doit-elle s'arrêter ? On nettoie le soulèvement en même
+   * temps : une carte laissée en `naming` resterait figée hors de la rangée.
+   */
+  private stopNaming(): boolean {
+    if (!this.disposed && !this.interrupted) return false;
+    this.root.querySelectorAll('.naming').forEach((n) => n.classList.remove('naming'));
+    return true;
   }
 
   /* ---------------- rendu ---------------- */
@@ -196,6 +233,7 @@ export class SortRunner {
       this.paint(face, bin);
       // Une cible aussi s'écoute : le mot modèle des rimes est le premier que
       // l'enfant oublie, puisqu'il est prononcé avant les deux propositions.
+      face.addEventListener('pointerdown', () => this.noteInteraction());
       face.addEventListener('click', () => {
         if (bin.sound) void this.host.speak(bin.sound);
       });
@@ -240,7 +278,10 @@ export class SortRunner {
     };
 
     const onDown = (event: PointerEvent) => {
-      if (this.busy || this.disposed || node.classList.contains('placed')) return;
+      if (this.disposed) return;
+      // Même sur une carte déjà rangée : ce qui compte est que l'enfant agit.
+      this.noteInteraction();
+      if (this.busy || node.classList.contains('placed')) return;
       pointerId = event.pointerId;
       originX = event.clientX;
       originY = event.clientY;

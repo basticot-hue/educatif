@@ -194,10 +194,23 @@ export function Fabrique({ onDone }: Props) {
         }}
       />
 
+      {/*
+        L'appareil photo, et la maison à côté.
+
+        La maison manquait : l'enfant entré à la Fabrique n'avait qu'une seule
+        cible à l'écran, et prendre une photo était le seul moyen d'en ressortir.
+        Celui qui ne voulait plus rien photographier — ou qui s'était trompé de
+        tuile — y restait enfermé.
+      */}
       {step === 'photo' && (
-        <button className="big-round" aria-label="prendre une photo" onClick={() => fileInput.current?.click()}>
-          <CameraGlyph />
-        </button>
+        <div className="fab-row">
+          <button className="big-round" aria-label="prendre une photo" onClick={() => fileInput.current?.click()}>
+            <CameraGlyph />
+          </button>
+          <button className="big-round small" aria-label="terminer" onClick={onDone}>
+            <HomeGlyph />
+          </button>
+        </div>
       )}
 
       {/*

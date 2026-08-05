@@ -116,6 +116,10 @@ class SonsActivity implements Activity {
       return this.next();
     }
 
+    // Le tour précédent est fini : sans cela son runner survivait à son propre
+    // écran, minuteries comprises, et continuait de parler par-dessus le suivant.
+    this.sorter?.dispose();
+
     this.root.textContent = '';
     const host = el('div', undefined, this.root);
     host.style.cssText = 'width:100%;height:100%';

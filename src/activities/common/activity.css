@@ -9,6 +9,13 @@
   justify-content: center;
   gap: var(--gap);
   padding: var(--gap);
+  /*
+   * Les deux portes vivent dans les coins bas et flottent au-dessus de
+   * l'atelier. Sans cette réserve, la première et la dernière carte de la
+   * rangée du bas passent dessous : l'enfant attrape une carte par son coin et
+   * quitte l'atelier au lieu de la déplacer.
+   */
+  padding-bottom: calc(var(--gap) + var(--door-zone));
   background: var(--bg);
 }
 

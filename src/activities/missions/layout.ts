@@ -10,6 +10,32 @@
 export const MIN_TARGET = 88;
 export const MIN_GAP = 24;
 
+/**
+ * Largeur interdite dans les deux coins bas : la porte de sortie de l'enfant à
+ * gauche, la porte parent à droite.
+ *
+ * La réserve était posée à `gap + tokenSize / 2`, c'est-à-dire exactement sous
+ * la porte de sortie. Un enfant qui visait la première caisse et touchait un peu
+ * bas quittait l'atelier au lieu de charger le camion — le quart bas-gauche de
+ * cette caisse ouvrait la porte, et le moteur comptait un abandon.
+ *
+ * Ce nombre double `--door-zone` dans `styles/tokens.css`, qui tient la même
+ * réserve pour les ateliers bâtis en DOM. Les deux doivent bouger ensemble.
+ */
+export const DOOR_ZONE = 100;
+
+/**
+ * Écart entre deux caisses de la réserve.
+ *
+ * Plus serré que `MIN_GAP`, et c'est volontaire : les 24 px protègent le choix
+ * entre deux cibles **différentes**, où toucher la voisine est une erreur. Dans
+ * la réserve, toutes les caisses sont identiques et interchangeables — en
+ * attraper une autre que celle visée n'a aucune conséquence. Serrer là permet
+ * de rendre aux alvéoles, elles bien distinctes, la largeur prise par la
+ * réserve des portes.
+ */
+export const RESERVE_GAP = 16;
+
 export interface Layout {
   width: number;
   height: number;
@@ -55,25 +81,38 @@ export function computeLayout(
   const cardW = Math.round(Math.min(width * 0.44, cardH * 1.6));
   const card = { x: Math.round((width - cardW) / 2), y: gap, w: cardW, h: cardH };
 
-  // La réserve prend au plus un tiers de la hauteur, et le jeton rétrécit
-  // jusqu'au plancher tactile plutôt que de déborder.
+  /*
+   * La réserve prend au plus un tiers de la hauteur, et le jeton rétrécit
+   * jusqu'au plancher tactile plutôt que de déborder.
+   *
+   * Elle s'écarte aussi des deux coins bas, où flottent les portes : c'est la
+   * seule bande de l'atelier qui les touche, puisqu'elle est posée contre le
+   * bas de l'écran.
+   */
   const reserveMaxH = height * 0.34;
+  const reserveInset = gap + DOOR_ZONE;
+  const reserveAreaW = Math.max(MIN_TARGET, width - reserveInset * 2);
   let tokenSize = 92;
   let reserveColumns = 1;
   let reserveRows = 1;
   for (;;) {
-    reserveColumns = Math.max(1, Math.floor((width - gap * 2) / (tokenSize + gap)));
+    // `n` caisses laissent `n - 1` intervalles, pas `n` : compter l'intervalle
+    // de trop perdait une colonne entière sur les dalles étroites.
+    reserveColumns = Math.max(
+      1,
+      Math.floor((reserveAreaW + RESERVE_GAP) / (tokenSize + RESERVE_GAP)),
+    );
     reserveRows = Math.max(1, Math.ceil(reserveCount / reserveColumns));
-    const needed = reserveRows * (tokenSize + gap);
+    const needed = reserveRows * (tokenSize + RESERVE_GAP);
     if (needed <= reserveMaxH || tokenSize <= MIN_TARGET * 0.7) break;
     tokenSize -= 4;
   }
   tokenSize = Math.round(tokenSize);
-  const reservePitch = tokenSize + gap;
+  const reservePitch = tokenSize + RESERVE_GAP;
   const reserveH = reserveRows * reservePitch;
 
   const reserveOrigin = {
-    x: Math.round(gap + tokenSize / 2),
+    x: Math.round(reserveInset + tokenSize / 2),
     y: Math.round(height - gap - tokenSize / 2 - (reserveRows - 1) * reservePitch),
   };
 

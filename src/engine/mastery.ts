@@ -35,10 +35,27 @@ export function updateMastery(
   result: ItemResult,
   itemIndexInSession: number,
 ): Mastery {
-  // Une aide déclenchée n'est pas une réussite : l'enfant n'a pas produit la
-  // réponse seul. On la traite comme un échec pour la progression, sans que
-  // rien ne le signale à l'écran.
-  const success = result.correct && result.attempts === 1 && !result.assisted;
+  /*
+   * Une réussite, c'est `correct` — et rien d'autre à recalculer ici.
+   *
+   * Cette ligne exigeait aussi `attempts === 1`, et cela paraissait inoffensif
+   * puisque « choisir parmi N » pose déjà `correct = (attempts === 1)`. Mais
+   * `attempts` ne veut pas dire la même chose partout : dans « écouter puis
+   * glisser », il compte **un dépôt par carte**. Un tour sans faute à trois
+   * objets y vaut `attempts = 3`, et se voyait donc compté comme un échec.
+   *
+   * Conséquence, muette et totale : Le Sac de Chase, Le Château des mots et Le
+   * Récit ne pouvaient **jamais** monter d'un niveau. Chaque série parfaite
+   * remettait la série de réussites à zéro et incrémentait le compteur
+   * d'échecs. L'enfant rejouait le niveau 0 indéfiniment, et le moteur de
+   * progression — le cœur de l'application — ne tournait pas du tout sur la
+   * moitié des ateliers.
+   *
+   * Chaque atelier sait seul ce que « du premier coup » veut dire chez lui, et
+   * l'écrit dans `correct`. Le moteur ne le devine pas à sa place. On garde
+   * `!assisted` : Le Chemin ne le replie pas dans `correct`.
+   */
+  const success = result.correct && !result.assisted;
 
   const next: Mastery = { ...current };
 

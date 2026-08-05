@@ -10,13 +10,28 @@
   height: 100%;
 }
 
+/*
+ * Une rangée qui **rétrécit**, et qui ne passe jamais à la ligne.
+ *
+ * Elle s'enroulait : à quatre cibles, quatre fois 256 px ne tenaient pas dans
+ * 1024, la quatrième descendait sous les trois autres, et la scène devenait
+ * deux fois plus haute que l'écran. Le haut des cibles était rogné, le bas des
+ * cartes coupé, et la première carte finissait dans le coin bas-gauche, sous la
+ * porte de sortie. Personne ne le voyait sur une rangée de deux.
+ *
+ * Les cibles se serrent plutôt, jusqu'au plancher tactile posé plus bas et
+ * jamais en deçà. Une rangée trop serrée reste jouable ; une rangée hors de
+ * l'écran ne l'est pas.
+ */
 .sort-bins,
 .sort-cards {
   display: flex;
   align-items: flex-start;
   justify-content: center;
   gap: calc(var(--gap) * 1.5);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  max-width: 100%;
+  min-width: 0;
 }
 
 /* --- la cible --- */
@@ -27,10 +42,12 @@
   align-items: center;
   /* La cible doit rester large : c'est elle qu'on vise en glissant, et un doigt
      de trois ans arrive rarement au centre. */
-  min-width: calc(var(--target) * 1.6);
+  min-width: var(--target);
   border-radius: calc(var(--radius) * 1.4);
   padding: 8px;
   transition: background var(--t-fast) ease-out;
+  /* Se serre quand la rangée est chargée, jamais sous le plancher tactile. */
+  flex: 0 1 calc(var(--target) * 1.6);
 }
 
 /* Le doigt survole la cible : elle s'éclaire, sans bouger d'un pixel. */
@@ -45,6 +62,7 @@
   min-width: var(--target);
   min-height: var(--target);
   width: min(30vw, 240px);
+  max-width: 100%;
   height: min(30vh, 240px);
   padding: 14px;
   border-radius: calc(var(--radius) * 1.4);
@@ -92,6 +110,8 @@
   min-height: var(--target);
   width: min(26vw, 210px);
   height: min(26vh, 210px);
+  /* Comme les cibles : se serre plutôt que de passer à la ligne. */
+  flex: 0 1 auto;
   padding: 14px;
   border-radius: calc(var(--radius) * 1.4);
   background: var(--surface);
